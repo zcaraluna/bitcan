@@ -68,11 +68,14 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
--- Actualizar valores existentes antes de modificar ENUM
+-- Cambiar temporalmente a VARCHAR para poder actualizar valores
+ALTER TABLE certificates 
+  MODIFY COLUMN certificate_type VARCHAR(50);
+
 -- Mapear valores antiguos a nuevos valores
 UPDATE certificates 
 SET certificate_type = 'course_completion' 
-WHERE certificate_type = 'course' OR certificate_type IS NULL;
+WHERE certificate_type = 'course' OR certificate_type IS NULL OR certificate_type = '';
 
 UPDATE certificates 
 SET certificate_type = 'module_completion' 
@@ -83,7 +86,7 @@ UPDATE certificates
 SET certificate_type = 'course_completion' 
 WHERE certificate_type NOT IN ('course_completion', 'module_completion', 'achievement', 'participation');
 
--- Modificar columnas existentes
+-- Ahora cambiar a ENUM con los nuevos valores
 ALTER TABLE certificates 
   MODIFY COLUMN certificate_type ENUM('course_completion', 'module_completion', 'achievement', 'participation') DEFAULT 'course_completion',
   MODIFY COLUMN status ENUM('draft', 'issued', 'revoked', 'expired') DEFAULT 'draft';
