@@ -269,7 +269,7 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- Insertar plantilla por defecto (moderna) solo si no existe
--- Verificar qué columnas tiene la tabla y hacer INSERT condicional
+-- Primero verificar qué columnas tiene la tabla
 SET @has_template_html = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
   WHERE TABLE_SCHEMA = DATABASE() 
   AND TABLE_NAME = 'certificate_templates' 
@@ -280,46 +280,33 @@ SET @has_html_content = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
   AND TABLE_NAME = 'certificate_templates' 
   AND COLUMN_NAME = 'html_content');
 
-SET @template_html_content = '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white;">
-  <div style="text-align: center; padding: 40px;">
-    <h1 style="font-size: 48px; margin-bottom: 20px; font-weight: bold;">CERTIFICADO</h1>
-    <p style="font-size: 24px; margin-bottom: 40px;">Se otorga a</p>
-    <h2 style="font-size: 56px; margin-bottom: 40px; font-weight: bold; text-transform: uppercase;">{{student_name}}</h2>
-    <p style="font-size: 20px; margin-bottom: 20px;">Por completar exitosamente el curso</p>
-    <h3 style="font-size: 32px; margin-bottom: 40px; font-weight: 600;">{{course_title}}</h3>
-    <div style="display: flex; justify-content: space-around; max-width: 600px; margin: 0 auto;">
-      <div>
-        <p style="font-size: 14px; opacity: 0.9;">Duración</p>
-        <p style="font-size: 20px; font-weight: bold;">{{duration_hours}} horas</p>
-      </div>
-      <div>
-        <p style="font-size: 14px; opacity: 0.9;">Fecha de emisión</p>
-        <p style="font-size: 20px; font-weight: bold;">{{formatDate issue_date}}</p>
-      </div>
-    </div>
-    <p style="font-size: 14px; margin-top: 60px; opacity: 0.8;">Certificado N° {{certificate_number}}</p>
-  </div>
-</div>';
+SET @has_template_type = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+  WHERE TABLE_SCHEMA = DATABASE() 
+  AND TABLE_NAME = 'certificate_templates' 
+  AND COLUMN_NAME = 'template_type');
 
--- Insertar según qué columnas existen
-SET @sql = IF(@has_template_html > 0,
-  CONCAT('INSERT INTO certificate_templates (name, description, template_html', 
-    IF(@has_html_content > 0, ', html_content', ''),
-    IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ''certificate_templates'' AND COLUMN_NAME = ''template_type'') > 0, ', template_type', ''),
-    ', is_active, is_default, created_by) SELECT ''Plantilla Moderna'', ''Diseño moderno con gradiente'', ''', @template_html_content, '''',
-    IF(@has_html_content > 0, CONCAT(', ''', @template_html_content, ''''), ''),
-    IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ''certificate_templates'' AND COLUMN_NAME = ''template_type'') > 0, ', ''modern''', ''),
-    ', 1, 1, (SELECT id FROM users WHERE role = ''superadmin'' LIMIT 1) WHERE NOT EXISTS (SELECT 1 FROM certificate_templates WHERE is_default = 1)'),
-  CONCAT('INSERT INTO certificate_templates (name, description', 
-    IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ''certificate_templates'' AND COLUMN_NAME = ''template_type'') > 0, ', template_type', ''),
+-- Si tiene template_html, usar esa columna
+IF @has_template_html > 0 THEN
+  INSERT INTO certificate_templates (name, description, template_html, is_active, is_default, created_by)
+  SELECT 
+    'Plantilla Moderna',
+    'Diseño moderno con gradiente',
+    '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white;"><div style="text-align: center; padding: 40px;"><h1 style="font-size: 48px; margin-bottom: 20px; font-weight: bold;">CERTIFICADO</h1><p style="font-size: 24px; margin-bottom: 40px;">Se otorga a</p><h2 style="font-size: 56px; margin-bottom: 40px; font-weight: bold; text-transform: uppercase;">{{student_name}}</h2><p style="font-size: 20px; margin-bottom: 20px;">Por completar exitosamente el curso</p><h3 style="font-size: 32px; margin-bottom: 40px; font-weight: 600;">{{course_title}}</h3><div style="display: flex; justify-content: space-around; max-width: 600px; margin: 0 auto;"><div><p style="font-size: 14px; opacity: 0.9;">Duración</p><p style="font-size: 20px; font-weight: bold;">{{duration_hours}} horas</p></div><div><p style="font-size: 14px; opacity: 0.9;">Fecha de emisión</p><p style="font-size: 20px; font-weight: bold;">{{formatDate issue_date}}</p></div></div><p style="font-size: 14px; margin-top: 60px; opacity: 0.8;">Certificado N° {{certificate_number}}</p></div></div>',
+    1,
+    1,
+    (SELECT id FROM users WHERE role = 'superadmin' LIMIT 1)
+  WHERE NOT EXISTS (SELECT 1 FROM certificate_templates WHERE is_default = 1);
+-- Si tiene html_content, usar esa columna
+ELSEIF @has_html_content > 0 THEN
+  SET @sql = CONCAT('INSERT INTO certificate_templates (name, description', 
+    IF(@has_template_type > 0, ', template_type', ''),
     ', html_content, is_active, is_default, created_by) SELECT ''Plantilla Moderna'', ''Diseño moderno con gradiente''',
-    IF((SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ''certificate_templates'' AND COLUMN_NAME = ''template_type'') > 0, ', ''modern''', ''),
-    ', ''', @template_html_content, ''', 1, 1, (SELECT id FROM users WHERE role = ''superadmin'' LIMIT 1) WHERE NOT EXISTS (SELECT 1 FROM certificate_templates WHERE is_default = 1)')
-);
-
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
+    IF(@has_template_type > 0, ', ''modern''', ''),
+    ', ''<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white;"><div style="text-align: center; padding: 40px;"><h1 style="font-size: 48px; margin-bottom: 20px; font-weight: bold;">CERTIFICADO</h1><p style="font-size: 24px; margin-bottom: 40px;">Se otorga a</p><h2 style="font-size: 56px; margin-bottom: 40px; font-weight: bold; text-transform: uppercase;">{{student_name}}</h2><p style="font-size: 20px; margin-bottom: 20px;">Por completar exitosamente el curso</p><h3 style="font-size: 32px; margin-bottom: 40px; font-weight: 600;">{{course_title}}</h3><div style="display: flex; justify-content: space-around; max-width: 600px; margin: 0 auto;"><div><p style="font-size: 14px; opacity: 0.9;">Duración</p><p style="font-size: 20px; font-weight: bold;">{{duration_hours}} horas</p></div><div><p style="font-size: 14px; opacity: 0.9;">Fecha de emisión</p><p style="font-size: 20px; font-weight: bold;">{{formatDate issue_date}}</p></div></div><p style="font-size: 14px; margin-top: 60px; opacity: 0.8;">Certificado N° {{certificate_number}}</p></div></div>'', 1, 1, (SELECT id FROM users WHERE role = ''superadmin'' LIMIT 1)) WHERE NOT EXISTS (SELECT 1 FROM certificate_templates WHERE is_default = 1)');
+  PREPARE stmt FROM @sql;
+  EXECUTE stmt;
+  DEALLOCATE PREPARE stmt;
+END IF;
 
 -- Migrar datos antiguos al nuevo formato
 UPDATE certificates 
