@@ -362,28 +362,29 @@ JOIN courses co ON c.course_id = co.id
 LEFT JOIN users issued ON c.issued_by = issued.id
 LEFT JOIN users revoked ON c.revoked_by = revoked.id;
 
--- Trigger para logs automáticos (opcional)
-DELIMITER //
-
-CREATE TRIGGER IF NOT EXISTS after_certificate_insert
-AFTER INSERT ON certificates
-FOR EACH ROW
-BEGIN
-  INSERT INTO certificate_logs (certificate_id, action, performed_by, details)
-  VALUES (NEW.id, 'created', NEW.issued_by, 'Certificado creado');
-END//
-
-CREATE TRIGGER IF NOT EXISTS after_certificate_revoke
-AFTER UPDATE ON certificates
-FOR EACH ROW
-BEGIN
-  IF NEW.status = 'revoked' AND OLD.status != 'revoked' THEN
-    INSERT INTO certificate_logs (certificate_id, action, performed_by, details)
-    VALUES (NEW.id, 'revoked', NEW.revoked_by, NEW.revoke_reason);
-  END IF;
-END//
-
-DELIMITER ;
+-- Triggers para logs automáticos (opcionales)
+-- Nota: Los triggers requieren DELIMITER que no funciona en este contexto.
+-- Si necesitas los triggers, créalos manualmente después de la migración:
+-- 
+-- DELIMITER //
+-- CREATE TRIGGER after_certificate_insert
+-- AFTER INSERT ON certificates
+-- FOR EACH ROW
+-- BEGIN
+--   INSERT INTO certificate_logs (certificate_id, action, performed_by, details)
+--   VALUES (NEW.id, 'created', NEW.issued_by, 'Certificado creado');
+-- END//
+-- 
+-- CREATE TRIGGER after_certificate_revoke
+-- AFTER UPDATE ON certificates
+-- FOR EACH ROW
+-- BEGIN
+--   IF NEW.status = 'revoked' AND OLD.status != 'revoked' THEN
+--     INSERT INTO certificate_logs (certificate_id, action, performed_by, details)
+--     VALUES (NEW.id, 'revoked', NEW.revoked_by, NEW.revoke_reason);
+--   END IF;
+-- END//
+-- DELIMITER ;
 
 -- ========================================
 -- VERIFICACIÓN
