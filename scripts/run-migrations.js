@@ -40,6 +40,11 @@ const migrations = [
     description: 'Agrega campos de pago cripto a la tabla courses',
   },
   {
+    name: 'add_price_pyg_field',
+    file: 'add_price_pyg_field.sql',
+    description: 'Agrega campo price_pyg a la tabla courses',
+  },
+  {
     name: 'certificates_v2_migration',
     file: 'certificates_v2_migration.sql',
     description: 'Migración completa del sistema de certificados V2',

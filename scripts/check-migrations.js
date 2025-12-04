@@ -30,6 +30,12 @@ const migrations = [
     ],
   },
   {
+    name: 'add_price_pyg_field',
+    checks: [
+      { table: 'courses', column: 'price_pyg' },
+    ],
+  },
+  {
     name: 'certificates_v2_migration',
     checks: [
       { table: 'certificates', column: 'metadata' },
