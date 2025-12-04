@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { signIn } from 'next-auth/react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
@@ -65,8 +66,20 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    // TODO: Implementar Google OAuth cuando esté disponible
-    alert('El inicio de sesión con Google estará disponible próximamente');
+    setIsLoading(true);
+    setError('');
+    setErrorField(null);
+
+    try {
+      // Redirigir a NextAuth para iniciar sesión con Google
+      await signIn('google', {
+        callbackUrl: '/dashboard_estudiante',
+      });
+    } catch (err: any) {
+      setError('Error de conexión con Google');
+      setErrorField('general');
+      setIsLoading(false);
+    }
   };
 
   const handleResendVerification = async () => {
