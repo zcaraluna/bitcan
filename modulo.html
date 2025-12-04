@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificado BITCAN - Módulo</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 297mm;
+            height: 210mm;
+            margin: 0;
+            padding: 0;
+            font-family: "Times New Roman", serif;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        
+        .certificate-container {
+            width: 297mm;
+            height: 210mm;
+            background: #ffffff;
+            border: 12px solid #2E5090;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header */
+        .certificate-header {
+            background: linear-gradient(135deg, #2E5090 0%, #1e3a5f 100%);
+            color: white;
+            padding: 20px 50px;
+            text-align: center;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .logo-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            letter-spacing: 4px;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+        
+        /* Body */
+        .certificate-body {
+            flex: 1;
+            padding: 25px 70px 30px 70px;
+            text-align: center;
+            background: #fafafa;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 0;
+        }
+        
+        .certificate-logo {
+            max-width: 80px;
+            height: auto;
+            margin: 0 auto 15px auto;
+        }
+        
+        .presentation-text {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        
+        .certificate-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2E5090;
+            margin-bottom: 18px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        
+        .student-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2E5090;
+            margin: 18px auto;
+            border-bottom: 4px solid #2E5090;
+            padding-bottom: 10px;
+            display: inline-block;
+            min-width: 400px;
+        }
+        
+        .achievement-text {
+            font-size: 1.2rem;
+            color: #333;
+            margin: 20px auto;
+            font-weight: 500;
+            max-width: 550px;
+            line-height: 1.5;
+        }
+        
+        .course-name {
+            font-weight: bold;
+            color: #2E5090;
+            font-size: 1.3rem;
+        }
+        
+        .certificate-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px auto 0;
+            padding: 18px 30px;
+            background: #ffffff;
+            border: 3px solid #e0e0e0;
+            width: 90%;
+            max-width: 700px;
+        }
+        
+        .detail-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .detail-label {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: bold;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        
+        .detail-value {
+            font-size: 1rem;
+            color: #2E5090;
+            font-weight: bold;
+        }
+        
+        /* Footer */
+        .certificate-footer {
+            background: linear-gradient(135deg, #2E5090 0%, #1e3a5f 100%);
+            color: white;
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+        
+        .instructor-notice {
+            font-size: 1rem;
+            font-weight: 500;
+            text-align: left;
+            line-height: 1.5;
+            max-width: 70%;
+            white-space: pre-line;
+        }
+        
+        .certificate-number {
+            font-size: 0.95rem;
+            font-weight: bold;
+            text-align: right;
+            max-width: 30%;
+        }
+        
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 4.5rem;
+            color: rgba(46, 80, 144, 0.06);
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .security-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle, rgba(46, 80, 144, 0.12) 1.5px, transparent 1.5px);
+            background-size: 14px 14px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Decorative corners */
+        .corner {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            border: 4px solid #2E5090;
+        }
+        
+        .corner-tl {
+            top: 18px;
+            left: 18px;
+            border-right: none;
+            border-bottom: none;
+        }
+        
+        .corner-tr {
+            top: 18px;
+            right: 18px;
+            border-left: none;
+            border-bottom: none;
+        }
+        
+        .corner-bl {
+            bottom: 18px;
+            left: 18px;
+            border-right: none;
+            border-top: none;
+        }
+        
+        .corner-br {
+            bottom: 18px;
+            right: 18px;
+            border-left: none;
+            border-top: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="certificate-container">
+        <!-- Security pattern -->
+        <div class="security-pattern"></div>
+        
+        <!-- Watermark -->
+        <div class="watermark">BITCAN</div>
+        
+        <!-- Decorative corners -->
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+        
+        <!-- Header -->
+        <div class="certificate-header">
+            <div class="logo-text">BITCAN</div>
+            <div class="subtitle">Prevención a través de la Educación</div>
+        </div>
+        
+        <!-- Body -->
+        <div class="certificate-body">
+            <img src="https://bitcan.com.py/bitcan-logo.png" alt="Logo BITCAN" class="certificate-logo">
+
+            <div class="presentation-text">Se otorga el presente</div>
+            
+            <div class="certificate-title">Certificado</div>
+            
+            <div class="presentation-text">a</div>
+            
+            <div class="student-name">{{STUDENT_NAME}}</div>
+            
+            <div class="achievement-text">
+                por haber completado exitosamente el módulo<br>
+                <span class="course-name">"{{MODULE_NAME}}"</span><br>
+                correspondiente al Curso <span class="course-name">"{{COURSE_NAME}}"</span>
+            </div>
+            
+            <div class="certificate-details">
+                <div class="detail-item">
+                    <div class="detail-label">Horas Cursadas</div>
+                    <div class="detail-value">{{DURATION_HOURS}} horas</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Fecha de Inicio</div>
+                    <div class="detail-value">{{START_DATE}}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Fecha de Finalización</div>
+                    <div class="detail-value">{{COMPLETION_DATE}}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="certificate-footer">
+            <div class="instructor-notice">
+                {{CUSTOM_SIGNATURE}}
+                {{#if CUSTOM_MESSAGE}}
+                <div style="margin-top: 15px; font-size: 0.95rem; font-weight: 400; line-height: 1.5;">
+                    {{CUSTOM_MESSAGE}}
+                </div>
+                {{/if}}
+            </div>
+            <div class="certificate-number">Certificado N°: {{CERTIFICATE_NUMBER}}</div>
+        </div>
+    </div>
+</body>
+</html>
+

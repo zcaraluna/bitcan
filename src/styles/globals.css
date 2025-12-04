@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  
+  body {
+    @apply bg-background font-sans text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  /* Botones */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-card transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .btn-primary {
+    @apply btn bg-primary text-white hover:bg-primary-dark hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-secondary text-white hover:bg-secondary-dark hover:shadow-md;
+  }
+  
+  .btn-outline {
+    @apply btn border border-primary text-primary hover:bg-primary hover:text-white;
+  }
+  
+  .btn-ghost {
+    @apply btn hover:bg-gray-100;
+  }
+  
+  .btn-success {
+    @apply btn bg-green-600 text-white hover:bg-green-700 hover:shadow-md;
+  }
+  
+  .btn-warning {
+    @apply btn bg-yellow-500 text-white hover:bg-yellow-600 hover:shadow-md;
+  }
+  
+  /* Cards */
+  .card {
+    @apply bg-white rounded-card shadow-card hover:shadow-card-hover transition-all duration-200;
+  }
+  
+  .card-stats {
+    @apply bg-gradient-to-br from-primary to-secondary text-white rounded-card shadow-card p-6 relative overflow-hidden;
+  }
+  
+  /* Alerts */
+  .alert {
+    @apply px-4 py-3 rounded-card border;
+  }
+  
+  .alert-error {
+    @apply alert bg-red-50 border-red-200 text-red-800;
+  }
+  
+  .alert-warning {
+    @apply alert bg-yellow-50 border-yellow-200 text-yellow-800;
+  }
+  
+  .alert-success {
+    @apply alert bg-green-50 border-green-200 text-green-800;
+  }
+  
+  .alert-info {
+    @apply alert bg-blue-50 border-blue-200 text-blue-800;
+  }
+  
+  /* Sidebar */
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors duration-200 relative;
+  }
+  
+  .sidebar-item-active {
+    @apply sidebar-item bg-primary text-white hover:bg-primary-dark;
+  }
+  
+  .sidebar-item-active::before {
+    content: '';
+    @apply absolute left-0 top-0 bottom-0 w-1 bg-white;
+  }
+}
+
+@layer utilities {
+  .hover-lift {
+    @apply hover:-translate-y-1 transition-transform duration-200;
+  }
+  
+  /* Ocultar elementos que muestren solo "0" */
+  .mb-6:has(> *:empty:only-child) > *:empty:only-child::before,
+  .mb-6:has(> *:empty:only-child) > *:empty:only-child::after {
+    content: none !important;
+  }
+}
+
+
