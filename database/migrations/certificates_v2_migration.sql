@@ -69,11 +69,19 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 -- Actualizar valores existentes antes de modificar ENUM
--- Convertir valores inválidos o NULL a 'course_completion'
+-- Mapear valores antiguos a nuevos valores
 UPDATE certificates 
 SET certificate_type = 'course_completion' 
-WHERE certificate_type IS NULL 
-   OR certificate_type NOT IN ('course_completion', 'module_completion', 'achievement', 'participation');
+WHERE certificate_type = 'course' OR certificate_type IS NULL;
+
+UPDATE certificates 
+SET certificate_type = 'module_completion' 
+WHERE certificate_type = 'module';
+
+-- Convertir cualquier otro valor inválido a 'course_completion'
+UPDATE certificates 
+SET certificate_type = 'course_completion' 
+WHERE certificate_type NOT IN ('course_completion', 'module_completion', 'achievement', 'participation');
 
 -- Modificar columnas existentes
 ALTER TABLE certificates 
