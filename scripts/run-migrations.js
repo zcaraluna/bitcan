@@ -1,7 +1,10 @@
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: '.env.local' });
+
+// Cargar .env.production si existe, sino .env.local
+const envFile = fs.existsSync('.env.production') ? '.env.production' : '.env.local';
+require('dotenv').config({ path: envFile });
 
 // Configuración de conexión
 const dbConfig = {
