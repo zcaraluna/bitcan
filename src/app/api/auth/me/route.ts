@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../[...nextauth]/route';
+import { authOptions } from '@/lib/auth-config';
 import { verifyToken } from '@/lib/auth';
 import { queryOne } from '@/lib/db';
 
