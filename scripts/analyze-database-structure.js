@@ -205,8 +205,10 @@ async function analyzeDatabase() {
     }));
     console.log(`✅ Encontrados ${procedures.length} procedimientos`);
 
-    // Guardar resultado
-    const outputPath = path.join(__dirname, '..', 'database-structure-local.json');
+    // Determinar nombre del archivo según el entorno
+    const isProduction = fs.existsSync('.env.production');
+    const filename = isProduction ? 'database-structure-vps.json' : 'database-structure-local.json';
+    const outputPath = path.join(__dirname, '..', filename);
     fs.writeFileSync(outputPath, JSON.stringify(output, null, 2), 'utf8');
     
     console.log(`\n✅ Estructura guardada en: ${outputPath}`);

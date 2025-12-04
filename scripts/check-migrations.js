@@ -36,6 +36,29 @@ const migrations = [
     ],
   },
   {
+    name: 'add_courses_exchange_rate_fields',
+    checks: [
+      { table: 'courses', column: 'exchange_rate_usd' },
+      { table: 'courses', column: 'exchange_rate_ars' },
+      { table: 'courses', column: 'exchange_rate_brl' },
+      { table: 'courses', column: 'rates_snapshot_at' },
+      { table: 'courses', column: 'payment_ruc' },
+    ],
+  },
+  {
+    name: 'add_users_profile_fields',
+    checks: [
+      { table: 'users', column: 'codigo_postal' },
+      { table: 'users', column: 'nivel_educativo' },
+    ],
+  },
+  {
+    name: 'add_exchange_rates_table',
+    checks: [
+      { table: 'exchange_rates', exists: true },
+    ],
+  },
+  {
     name: 'certificates_v2_migration',
     checks: [
       { table: 'certificates', column: 'metadata' },

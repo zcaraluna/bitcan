@@ -3,18 +3,26 @@ const path = require('path');
 
 // Cargar estructuras
 const localPath = path.join(__dirname, '..', 'database-structure-local.json');
-const vpsPath = path.join(__dirname, '..', 'database-structure-vps.json');
+let vpsPath = path.join(__dirname, '..', 'database-structure-vps.json');
+
+// Si no existe database-structure-vps.json, buscar database-structure-local.json del VPS
+if (!fs.existsSync(vpsPath)) {
+  // Buscar si hay un archivo con timestamp o nombre alternativo
+  const altPath = path.join(__dirname, '..', 'database-structure-vps.json');
+  if (fs.existsSync(altPath)) {
+    vpsPath = altPath;
+  } else {
+    console.error('❌ No se encontró database-structure-vps.json');
+    console.error('   Opciones:');
+    console.error('   1. Copia el archivo del VPS: scp root@vps:/ruta/database-structure-local.json database-structure-vps.json');
+    console.error('   2. O renombra el archivo del VPS a database-structure-vps.json');
+    process.exit(1);
+  }
+}
 
 if (!fs.existsSync(localPath)) {
   console.error('❌ No se encontró database-structure-local.json');
   console.error('   Ejecuta primero: node scripts/analyze-database-structure.js');
-  process.exit(1);
-}
-
-if (!fs.existsSync(vpsPath)) {
-  console.error('❌ No se encontró database-structure-vps.json');
-  console.error('   Ejecuta en el VPS: node scripts/analyze-database-structure.js');
-  console.error('   Luego copia el archivo database-structure-vps.json al proyecto local');
   process.exit(1);
 }
 

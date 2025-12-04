@@ -45,6 +45,21 @@ const migrations = [
     description: 'Agrega campo price_pyg a la tabla courses',
   },
   {
+    name: 'add_courses_exchange_rate_fields',
+    file: 'add_courses_exchange_rate_fields.sql',
+    description: 'Agrega campos de tasas de cambio y RUC a la tabla courses',
+  },
+  {
+    name: 'add_users_profile_fields',
+    file: 'add_users_profile_fields.sql',
+    description: 'Agrega campos de perfil adicionales (codigo_postal, nivel_educativo) a la tabla users',
+  },
+  {
+    name: 'add_exchange_rates_table',
+    file: 'add_exchange_rates_table.sql',
+    description: 'Crea la tabla exchange_rates',
+  },
+  {
     name: 'certificates_v2_migration',
     file: 'certificates_v2_migration.sql',
     description: 'Migración completa del sistema de certificados V2',
