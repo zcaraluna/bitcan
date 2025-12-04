@@ -183,7 +183,20 @@ CREATE TABLE IF NOT EXISTS certificate_templates (
   INDEX idx_template_default (is_default)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insertar plantilla por defecto (moderna)
+-- Agregar columna template_type si la tabla existe pero no tiene esta columna
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = DATABASE() 
+   AND TABLE_NAME = 'certificate_templates' 
+   AND COLUMN_NAME = 'template_type') = 0,
+  'ALTER TABLE certificate_templates ADD COLUMN template_type ENUM(''modern'', ''classic'', ''minimal'', ''corporate'', ''custom'') DEFAULT ''custom'' AFTER description',
+  'SELECT ''Column template_type already exists'' as message'
+));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Insertar plantilla por defecto (moderna) solo si no existe
 INSERT INTO certificate_templates (name, description, template_type, html_content, is_active, is_default, created_by)
 SELECT 
   'Plantilla Moderna',
@@ -209,10 +222,10 @@ SELECT
     <p style="font-size: 14px; margin-top: 60px; opacity: 0.8;">Certificado N° {{certificate_number}}</p>
   </div>
 </div>',
-  TRUE,
-  TRUE,
+  1,
+  1,
   (SELECT id FROM users WHERE role = 'superadmin' LIMIT 1)
-WHERE NOT EXISTS (SELECT 1 FROM certificate_templates WHERE is_default = TRUE);
+WHERE NOT EXISTS (SELECT 1 FROM certificate_templates WHERE is_default = 1);
 
 -- Migrar datos antiguos al nuevo formato
 UPDATE certificates 
