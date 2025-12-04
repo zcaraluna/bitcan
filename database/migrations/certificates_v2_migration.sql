@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS certificate_templates (
   INDEX idx_template_default (is_default)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Agregar columna template_type si la tabla existe pero no tiene esta columna
+-- Agregar columnas faltantes si la tabla existe pero no tiene todas las columnas
 SET @sql = (SELECT IF(
   (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
    WHERE TABLE_SCHEMA = DATABASE() 
@@ -191,6 +191,78 @@ SET @sql = (SELECT IF(
    AND COLUMN_NAME = 'template_type') = 0,
   'ALTER TABLE certificate_templates ADD COLUMN template_type ENUM(''modern'', ''classic'', ''minimal'', ''corporate'', ''custom'') DEFAULT ''custom'' AFTER description',
   'SELECT ''Column template_type already exists'' as message'
+));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = DATABASE() 
+   AND TABLE_NAME = 'certificate_templates' 
+   AND COLUMN_NAME = 'html_content') = 0,
+  'ALTER TABLE certificate_templates ADD COLUMN html_content TEXT NOT NULL COMMENT ''Contenido HTML de la plantilla'' AFTER template_type',
+  'SELECT ''Column html_content already exists'' as message'
+));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = DATABASE() 
+   AND TABLE_NAME = 'certificate_templates' 
+   AND COLUMN_NAME = 'css_styles') = 0,
+  'ALTER TABLE certificate_templates ADD COLUMN css_styles TEXT NULL COMMENT ''Estilos CSS personalizados'' AFTER html_content',
+  'SELECT ''Column css_styles already exists'' as message'
+));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = DATABASE() 
+   AND TABLE_NAME = 'certificate_templates' 
+   AND COLUMN_NAME = 'is_active') = 0,
+  'ALTER TABLE certificate_templates ADD COLUMN is_active BOOLEAN DEFAULT TRUE COMMENT ''Si la plantilla está activa'' AFTER css_styles',
+  'SELECT ''Column is_active already exists'' as message'
+));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = DATABASE() 
+   AND TABLE_NAME = 'certificate_templates' 
+   AND COLUMN_NAME = 'is_default') = 0,
+  'ALTER TABLE certificate_templates ADD COLUMN is_default BOOLEAN DEFAULT FALSE COMMENT ''Si es la plantilla por defecto'' AFTER is_active',
+  'SELECT ''Column is_default already exists'' as message'
+));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = DATABASE() 
+   AND TABLE_NAME = 'certificate_templates' 
+   AND COLUMN_NAME = 'preview_image_url') = 0,
+  'ALTER TABLE certificate_templates ADD COLUMN preview_image_url VARCHAR(500) NULL COMMENT ''URL de imagen de preview'' AFTER is_default',
+  'SELECT ''Column preview_image_url already exists'' as message'
+));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+   WHERE TABLE_SCHEMA = DATABASE() 
+   AND TABLE_NAME = 'certificate_templates' 
+   AND COLUMN_NAME = 'created_by') = 0,
+  'ALTER TABLE certificate_templates ADD COLUMN created_by INT NOT NULL COMMENT ''Usuario que creó la plantilla'' AFTER preview_image_url',
+  'SELECT ''Column created_by already exists'' as message'
 ));
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
