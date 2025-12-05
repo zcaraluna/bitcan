@@ -91,3 +91,102 @@ export async function GET(
   }
 }
 
+// PUT - Actualizar lección
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string; lessonId: string } }
+) {
+  try {
+    const token = request.cookies.get('auth-token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    if (!decoded || decoded.role !== 'profesor') {
+      return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
+    }
+
+    const instructorId = decoded.id;
+    const courseId = parseInt(params.id);
+    const lessonId = parseInt(params.lessonId);
+
+    // Verificar que el profesor es instructor del curso
+    const instructorCheck = await queryOne(`
+      SELECT ci.course_id
+      FROM course_instructors ci
+      WHERE ci.course_id = ? AND ci.instructor_id = ?
+    `, [courseId, instructorId]);
+
+    if (!instructorCheck) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para editar lecciones en este curso' },
+        { status: 403 }
+      );
+    }
+
+    // Verificar que la lección pertenece al curso
+    const lessonCheck = await queryOne(`
+      SELECT id FROM lessons WHERE id = ? AND course_id = ?
+    `, [lessonId, courseId]);
+
+    if (!lessonCheck) {
+      return NextResponse.json(
+        { error: 'Lección no encontrada o no pertenece a este curso' },
+        { status: 404 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      title,
+      description,
+      content,
+      duration_minutes,
+      video_url,
+      sort_order
+    } = body;
+
+    if (!title || !title.trim()) {
+      return NextResponse.json(
+        { error: 'El título es requerido' },
+        { status: 400 }
+      );
+    }
+
+    // Actualizar la lección
+    await query(`
+      UPDATE lessons SET
+        title = ?,
+        description = ?,
+        content = ?,
+        duration_minutes = ?,
+        video_url = ?,
+        sort_order = ?,
+        updated_at = NOW()
+      WHERE id = ? AND course_id = ?
+    `, [
+      title.trim(),
+      description?.trim() || null,
+      content?.trim() || null,
+      duration_minutes ? parseInt(String(duration_minutes)) : null,
+      video_url?.trim() || null,
+      sort_order ? parseInt(String(sort_order)) : null,
+      lessonId,
+      courseId
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Lección actualizada exitosamente'
+    });
+
+  } catch (error) {
+    console.error('Error updating lesson:', error);
+    return NextResponse.json(
+      { error: 'Error al actualizar la lección' },
+      { status: 500 }
+    );
+  }
+}
+

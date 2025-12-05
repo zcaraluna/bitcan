@@ -136,6 +136,7 @@ function CourseManagementContent() {
   });
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [creatingLesson, setCreatingLesson] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<number | null>(null);
   const [lessonForm, setLessonForm] = useState({
     title: '',
     description: '',
@@ -316,6 +317,35 @@ function CourseManagementContent() {
     return `${(bytes / 1024).toFixed(1)} KB`;
   };
 
+  const handleOpenEditLesson = async (lessonId: number) => {
+    try {
+      const response = await fetch(`/api/professor/courses/${courseId}/lessons/${lessonId}`);
+      if (!response.ok) {
+        setError('Error al cargar la lección');
+        return;
+      }
+
+      const result = await response.json();
+      if (result.success && result.data.lesson) {
+        const lesson = result.data.lesson;
+        setLessonForm({
+          title: lesson.title || '',
+          description: lesson.description || '',
+          content: lesson.content || '',
+          duration_minutes: lesson.duration_minutes?.toString() || '',
+          video_url: lesson.video_url || '',
+          sort_order: lesson.sort_order?.toString() || ''
+        });
+        setEditingLesson(lessonId);
+        setShowLessonModal(true);
+        setError(null);
+      }
+    } catch (error) {
+      console.error('Error loading lesson:', error);
+      setError('Error al cargar la lección');
+    }
+  };
+
   const handleCreateLesson = async () => {
     if (!lessonForm.title.trim()) {
       setError('El título es requerido');
@@ -358,11 +388,70 @@ function CourseManagementContent() {
           video_url: '',
           sort_order: ''
         });
+        setEditingLesson(null);
         fetchCourseData();
       }
     } catch (error) {
       console.error('Error creating lesson:', error);
       setError('Error al crear la lección');
+    } finally {
+      setCreatingLesson(false);
+    }
+  };
+
+  const handleUpdateLesson = async () => {
+    if (!lessonForm.title.trim()) {
+      setError('El título es requerido');
+      return;
+    }
+
+    if (!editingLesson) {
+      setError('ID de lección no válido');
+      return;
+    }
+
+    try {
+      setCreatingLesson(true);
+      setError(null);
+
+      const response = await fetch(`/api/professor/courses/${courseId}/lessons/${editingLesson}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: lessonForm.title.trim(),
+          description: lessonForm.description.trim() || null,
+          content: lessonForm.content.trim() || null,
+          duration_minutes: lessonForm.duration_minutes ? parseInt(lessonForm.duration_minutes) : null,
+          video_url: lessonForm.video_url.trim() || null,
+          sort_order: lessonForm.sort_order ? parseInt(lessonForm.sort_order) : null,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || 'Error al actualizar la lección');
+        return;
+      }
+
+      if (result.success) {
+        setShowLessonModal(false);
+        setLessonForm({
+          title: '',
+          description: '',
+          content: '',
+          duration_minutes: '',
+          video_url: '',
+          sort_order: ''
+        });
+        setEditingLesson(null);
+        fetchCourseData();
+      }
+    } catch (error) {
+      console.error('Error updating lesson:', error);
+      setError('Error al actualizar la lección');
     } finally {
       setCreatingLesson(false);
     }
@@ -639,6 +728,13 @@ function CourseManagementContent() {
                             {lesson.estudiantes_completaron} estudiantes completaron
                           </small>
                           <div className="flex gap-2">
+                            <button
+                              onClick={() => handleOpenEditLesson(lesson.id)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Editar Lección"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => router.push(`/dashboard_profesor/courses/${courseId}/lessons/${lesson.id}`)}
                               className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -1084,7 +1180,11 @@ function CourseManagementContent() {
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      handleCreateLesson();
+                      if (editingLesson) {
+                        handleUpdateLesson();
+                      } else {
+                        handleCreateLesson();
+                      }
                     }}
                     className="space-y-4"
                   >
@@ -1181,12 +1281,21 @@ function CourseManagementContent() {
                         {creatingLesson ? (
                           <>
                             <LoadingSpinner />
-                            Creando...
+                            {editingLesson ? 'Actualizando...' : 'Creando...'}
                           </>
                         ) : (
                           <>
-                            <Plus className="w-4 h-4" />
-                            Crear Lección
+                            {editingLesson ? (
+                              <>
+                                <Edit className="w-4 h-4" />
+                                Guardar Cambios
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-4 h-4" />
+                                Crear Lección
+                              </>
+                            )}
                           </>
                         )}
                       </button>
@@ -1202,6 +1311,7 @@ function CourseManagementContent() {
                             video_url: '',
                             sort_order: ''
                           });
+                          setEditingLesson(null);
                           setError(null);
                         }}
                         className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
