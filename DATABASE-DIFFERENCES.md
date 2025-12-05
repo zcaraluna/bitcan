@@ -44,3 +44,4 @@ Columnas que faltan en VPS:
 2. Ejecutar `node scripts/compare-databases.js` para obtener comparación detallada
 3. Crear migraciones para todas las diferencias identificadas
 
+

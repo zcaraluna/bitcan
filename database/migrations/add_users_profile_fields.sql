@@ -29,3 +29,4 @@ DEALLOCATE PREPARE stmt;
 -- Mensaje de confirmación
 SELECT 'Migración de campos de perfil adicionales completada exitosamente' AS resultado;
 
+

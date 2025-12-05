@@ -14,3 +14,4 @@ CREATE TABLE IF NOT EXISTS exchange_rates (
 -- Mensaje de confirmación
 SELECT 'Migración de tabla exchange_rates completada exitosamente' AS resultado;
 
+

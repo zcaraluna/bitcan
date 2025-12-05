@@ -68,3 +68,4 @@ DEALLOCATE PREPARE stmt;
 -- Mensaje de confirmación
 SELECT 'Migración de campos de tasas de cambio y RUC completada exitosamente' AS resultado;
 
+

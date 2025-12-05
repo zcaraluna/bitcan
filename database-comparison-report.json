@@ -1,0 +1,2000 @@
+{
+  "missingTables": [
+    "exchange_rates"
+  ],
+  "extraTables": [],
+  "tableDifferences": {
+    "certificate_logs": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "certificate_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "performed_by",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "certificate_templates": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "created_by",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "certificates": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "issued_by",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "rating_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "metadata",
+          "local": {
+            "type": "json",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "longtext",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "revoked_by",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "certificates_backup": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": "0"
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "issued_by",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "rating_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "comments": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "lesson_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "parent_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "coupon_courses": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "coupon_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "coupon_usage": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "coupon_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "coupons": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "max_uses",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        },
+        {
+          "column": "used_count",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        },
+        {
+          "column": "created_by",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "course_applications": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "reviewed_by",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "course_categories": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "course_instructors": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "instructor_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "course_ratings": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "professor_rating",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "platform_rating",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_rating",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "course_resources": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "file_size",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "created_by",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "courses": {
+      "missingColumns": [
+        "price_pyg",
+        "exchange_rate_usd",
+        "exchange_rate_ars",
+        "exchange_rate_brl",
+        "rates_snapshot_at",
+        "payment_ruc"
+      ],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "max_students",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "category_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "duration_minutes",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        },
+        {
+          "column": "sort_order",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        },
+        {
+          "column": "instructor_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "favorites": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "lesson_resources": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "lesson_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "file_size",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "sort_order",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        }
+      ]
+    },
+    "lessons": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "duration_minutes",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        },
+        {
+          "column": "sort_order",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        }
+      ]
+    },
+    "message_attachments": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "message_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "file_size",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "message_recipients": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "message_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "messages": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "sender_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "parent_message_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "notification_views": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "notification_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "notifications": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "target_course_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "created_by",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "notifications_backup": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "quiz_answer_attachments": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "quiz_result_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "question_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "file_size",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "quiz_answers": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "result_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "question_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "quiz_manual_grades": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "quiz_result_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "question_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "graded_by",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "quiz_options": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "question_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "sort_order",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        }
+      ]
+    },
+    "quiz_questions": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "quiz_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "sort_order",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        }
+      ]
+    },
+    "quiz_results": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "quiz_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "time_taken_minutes",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "quiz_sessions": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "quiz_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "time_limit_minutes",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "quizzes": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "time_limit_minutes",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "role_audit_log": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "changed_by",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "schema_migrations": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "super_admin_emails": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "created_by",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "system_audit_log": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        },
+        {
+          "column": "record_id",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "NULL"
+          }
+        }
+      ]
+    },
+    "system_config": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "user_courses": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "user_lessons": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "lesson_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "course_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "time_watched",
+          "local": {
+            "type": "int",
+            "nullable": true,
+            "default": "0"
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": true,
+            "default": "0"
+          }
+        }
+      ]
+    },
+    "user_profiles": {
+      "missingColumns": [],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        },
+        {
+          "column": "user_id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    },
+    "users": {
+      "missingColumns": [
+        "codigo_postal",
+        "nivel_educativo"
+      ],
+      "extraColumns": [],
+      "columnDifferences": [
+        {
+          "column": "id",
+          "local": {
+            "type": "int",
+            "nullable": false,
+            "default": null
+          },
+          "vps": {
+            "type": "int(11)",
+            "nullable": false,
+            "default": null
+          }
+        }
+      ]
+    }
+  }
+}

@@ -16,3 +16,4 @@ DEALLOCATE PREPARE stmt;
 -- Mensaje de confirmación
 SELECT 'Migración de campo price_pyg completada exitosamente' AS resultado;
 
+

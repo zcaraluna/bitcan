@@ -45,6 +45,8 @@ pm2-combined.log
 # Database backups
 *.sql
 backup_*.sql
+# Pero permitir migraciones
+!database/migrations/*.sql
 
 # Temporary files
 temp_*
