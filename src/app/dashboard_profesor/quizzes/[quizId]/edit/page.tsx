@@ -65,7 +65,6 @@ function EditQuizContent() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'info' | 'questions'>('info');
   const [showAddQuestion, setShowAddQuestion] = useState(false);
-  const [showAddOption, setShowAddOption] = useState<number | null>(null);
   
   const [quizForm, setQuizForm] = useState({
     title: '',
@@ -84,11 +83,7 @@ function EditQuizContent() {
     points: 1,
     require_justification: false,
     question_file: null as File | null,
-  });
-
-  const [optionForm, setOptionForm] = useState({
-    option_text: '',
-    is_correct: false,
+    options: [] as Array<{ text: string; is_correct: boolean }>,
   });
 
   useEffect(() => {
@@ -186,6 +181,45 @@ function EditQuizContent() {
   const handleAddQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validaciones
+    if (!questionForm.question_text.trim()) {
+      showToast({ type: 'error', title: 'El texto de la pregunta es requerido' });
+      return;
+    }
+
+    // Validar opciones según el tipo de pregunta
+    if (questionForm.question_type !== 'text') {
+      if (questionForm.question_type === 'true_false') {
+        // Verdadero/Falso debe tener exactamente 2 opciones
+        if (questionForm.options.length !== 2) {
+          showToast({ type: 'error', title: 'Las preguntas Verdadero/Falso deben tener exactamente 2 opciones' });
+          return;
+        }
+      } else {
+        // Selección única y múltiple necesitan al menos 2 opciones
+        if (questionForm.options.length < 2) {
+          showToast({ type: 'error', title: 'Debe agregar al menos 2 opciones de respuesta' });
+          return;
+        }
+      }
+
+      // Validar que haya al menos una opción correcta
+      const hasCorrect = questionForm.options.some(opt => opt.is_correct);
+      if (!hasCorrect) {
+        showToast({ type: 'error', title: 'Debe marcar al menos una opción como correcta' });
+        return;
+      }
+
+      // Para selección única, solo puede haber una opción correcta
+      if (questionForm.question_type === 'single_choice') {
+        const correctCount = questionForm.options.filter(opt => opt.is_correct).length;
+        if (correctCount !== 1) {
+          showToast({ type: 'error', title: 'Las preguntas de selección única deben tener exactamente una opción correcta' });
+          return;
+        }
+      }
+    }
+    
     try {
       setSubmitting(true);
       const formData = new FormData();
@@ -196,6 +230,11 @@ function EditQuizContent() {
       formData.append('require_justification', questionForm.require_justification ? '1' : '0');
       if (questionForm.question_file) {
         formData.append('question_file', questionForm.question_file);
+      }
+      
+      // Agregar opciones como JSON string
+      if (questionForm.question_type !== 'text') {
+        formData.append('options', JSON.stringify(questionForm.options));
       }
 
       const response = await fetch(`/api/professor/quizzes/${quizId}/edit`, {
@@ -211,9 +250,11 @@ function EditQuizContent() {
           points: 1,
           require_justification: false,
           question_file: null,
+          options: [],
         });
         setShowAddQuestion(false);
         fetchQuizData();
+        showToast({ type: 'success', title: 'Pregunta agregada exitosamente' });
       } else {
         showToast({ type: 'error', title: result.error || 'Error al agregar la pregunta' });
       }
@@ -225,37 +266,65 @@ function EditQuizContent() {
     }
   };
 
-  const handleAddOption = async (questionId: number, e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      setSubmitting(true);
-      const response = await fetch(`/api/professor/quizzes/${quizId}/edit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'add_option',
-          question_id: questionId,
-          option_text: optionForm.option_text,
-          is_correct: optionForm.is_correct ? 1 : 0,
-        }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setOptionForm({ option_text: '', is_correct: false });
-        setShowAddOption(null);
-        fetchQuizData();
-      } else {
-        showToast({ type: 'error', title: result.error || 'Error al agregar la opción' });
-      }
-    } catch (error) {
-      console.error('Error adding option:', error);
-      showToast({ type: 'error', title: 'Error al agregar la opción' });
-    } finally {
-      setSubmitting(false);
-    }
+  const handleAddOption = () => {
+    setQuestionForm({
+      ...questionForm,
+      options: [...questionForm.options, { text: '', is_correct: false }]
+    });
   };
+
+  const handleUpdateOption = (index: number, field: 'text' | 'is_correct', value: string | boolean) => {
+    const newOptions = [...questionForm.options];
+    if (field === 'text') {
+      newOptions[index].text = value as string;
+    } else {
+      // Para selección única, si se marca una como correcta, desmarcar las demás
+      if (questionForm.question_type === 'single_choice' && value === true) {
+        newOptions.forEach((opt, i) => {
+          opt.is_correct = i === index;
+        });
+      } else {
+        newOptions[index].is_correct = value as boolean;
+      }
+    }
+    setQuestionForm({ ...questionForm, options: newOptions });
+  };
+
+  const handleRemoveOption = (index: number) => {
+    setQuestionForm({
+      ...questionForm,
+      options: questionForm.options.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleQuestionTypeChange = (newType: 'single_choice' | 'multiple_choice' | 'true_false' | 'text') => {
+    let newOptions: Array<{ text: string; is_correct: boolean }> = [];
+    
+    if (newType === 'true_false') {
+      // Predefinir Verdadero y Falso
+      newOptions = [
+        { text: 'Verdadero', is_correct: false },
+        { text: 'Falso', is_correct: false }
+      ];
+    } else if (newType === 'text') {
+      // Texto libre no tiene opciones
+      newOptions = [];
+    } else {
+      // Selección única y múltiple empiezan con 2 opciones vacías
+      newOptions = [
+        { text: '', is_correct: false },
+        { text: '', is_correct: false }
+      ];
+    }
+
+    setQuestionForm({
+      ...questionForm,
+      question_type: newType,
+      options: newOptions,
+      require_justification: false, // Resetear justificación al cambiar tipo
+    });
+  };
+
 
   const handleDeleteQuestion = async (questionId: number) => {
     if (!confirm('¿Estás seguro de que quieres eliminar esta pregunta? Esta acción no se puede deshacer.')) {
@@ -539,7 +608,20 @@ function EditQuizContent() {
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold text-gray-900">Preguntas del Quiz</h2>
               <button
-                onClick={() => setShowAddQuestion(true)}
+                onClick={() => {
+                  setQuestionForm({
+                    question_text: '',
+                    question_type: 'single_choice',
+                    points: 1,
+                    require_justification: false,
+                    question_file: null,
+                    options: [
+                      { text: '', is_correct: false },
+                      { text: '', is_correct: false }
+                    ],
+                  });
+                  setShowAddQuestion(true);
+                }}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 <Plus className="w-4 h-4" />
@@ -561,6 +643,7 @@ function EditQuizContent() {
                         points: 1,
                         require_justification: false,
                         question_file: null,
+                        options: [],
                       });
                     }}
                     className="p-1 hover:bg-gray-100 rounded-lg"
@@ -568,7 +651,8 @@ function EditQuizContent() {
                     <X className="w-5 h-5" />
                   </button>
                 </div>
-                <form onSubmit={handleAddQuestion} className="space-y-4">
+                <form onSubmit={handleAddQuestion} className="space-y-6">
+                  {/* Texto de la Pregunta */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Texto de la Pregunta <span className="text-red-500">*</span>
@@ -578,9 +662,12 @@ function EditQuizContent() {
                       onChange={(e) => setQuestionForm({ ...questionForm, question_text: e.target.value })}
                       rows={3}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="Escribe la pregunta aquí..."
                       required
                     />
                   </div>
+
+                  {/* Tipo de Pregunta y Puntos */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -588,7 +675,7 @@ function EditQuizContent() {
                       </label>
                       <select
                         value={questionForm.question_type}
-                        onChange={(e) => setQuestionForm({ ...questionForm, question_type: e.target.value as any })}
+                        onChange={(e) => handleQuestionTypeChange(e.target.value as any)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         required
                       >
@@ -624,6 +711,96 @@ function EditQuizContent() {
                       />
                     </div>
                   </div>
+
+                  {/* Opciones de Respuesta */}
+                  {questionForm.question_type !== 'text' && (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Opciones de Respuesta <span className="text-red-500">*</span>
+                        </label>
+                        {questionForm.question_type !== 'true_false' && (
+                          <button
+                            type="button"
+                            onClick={handleAddOption}
+                            className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Agregar Opción
+                          </button>
+                        )}
+                      </div>
+                      
+                      {questionForm.question_type === 'single_choice' && (
+                        <p className="text-xs text-gray-500 mb-2">Selecciona exactamente una opción como correcta</p>
+                      )}
+                      {questionForm.question_type === 'multiple_choice' && (
+                        <p className="text-xs text-gray-500 mb-2">Puedes seleccionar múltiples opciones como correctas</p>
+                      )}
+                      {questionForm.question_type === 'true_false' && (
+                        <p className="text-xs text-gray-500 mb-2">Selecciona cuál es la respuesta correcta</p>
+                      )}
+
+                      <div className="space-y-3">
+                        {questionForm.options.map((option, index) => (
+                          <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex-1">
+                              {questionForm.question_type === 'true_false' ? (
+                                <input
+                                  type="text"
+                                  value={option.text}
+                                  disabled
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={option.text}
+                                  onChange={(e) => handleUpdateOption(index, 'text', e.target.value)}
+                                  placeholder={`Respuesta ${index + 1}`}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                  required
+                                />
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {questionForm.question_type === 'single_choice' ? (
+                                <input
+                                  type="radio"
+                                  name="correct_option"
+                                  checked={option.is_correct}
+                                  onChange={() => handleUpdateOption(index, 'is_correct', true)}
+                                  className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                                />
+                              ) : (
+                                <input
+                                  type="checkbox"
+                                  checked={option.is_correct}
+                                  onChange={(e) => handleUpdateOption(index, 'is_correct', e.target.checked)}
+                                  className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                />
+                              )}
+                              <span className="text-sm text-gray-700 min-w-[80px]">
+                                {option.is_correct ? 'Correcta' : 'Incorrecta'}
+                              </span>
+                            </div>
+                            {questionForm.question_type !== 'true_false' && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveOption(index)}
+                                className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                title="Eliminar opción"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Requiere Justificación (solo para verdadero/falso) */}
                   {questionForm.question_type === 'true_false' && (
                     <div className="flex items-center">
                       <input
@@ -638,19 +815,31 @@ function EditQuizContent() {
                       </label>
                     </div>
                   )}
-                  <div className="flex gap-4">
+
+                  {/* Botones */}
+                  <div className="flex gap-4 pt-4 border-t border-gray-200">
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Plus className="w-4 h-4" />
-                      Agregar Pregunta
+                      {submitting ? 'Agregando...' : 'Agregar Pregunta'}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowAddQuestion(false)}
-                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition-colors"
+                      onClick={() => {
+                        setShowAddQuestion(false);
+                        setQuestionForm({
+                          question_text: '',
+                          question_type: 'single_choice',
+                          points: 1,
+                          require_justification: false,
+                          question_file: null,
+                          options: [],
+                        });
+                      }}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium transition-colors"
                     >
                       Cancelar
                     </button>
@@ -666,7 +855,20 @@ function EditQuizContent() {
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No hay preguntas</h3>
                 <p className="text-gray-600 mb-4">Agrega preguntas para completar el quiz.</p>
                 <button
-                  onClick={() => setShowAddQuestion(true)}
+                  onClick={() => {
+                    setQuestionForm({
+                      question_text: '',
+                      question_type: 'single_choice',
+                      points: 1,
+                      require_justification: false,
+                      question_file: null,
+                      options: [
+                        { text: '', is_correct: false },
+                        { text: '', is_correct: false }
+                      ],
+                    });
+                    setShowAddQuestion(true);
+                  }}
                   className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
                 >
                   Agregar Primera Pregunta
@@ -720,77 +922,13 @@ function EditQuizContent() {
                     {/* Opciones */}
                     {(question.question_type === 'single_choice' || question.question_type === 'multiple_choice' || question.question_type === 'true_false') && (
                       <div className="mt-4 space-y-2">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="text-sm font-semibold text-gray-700">Opciones de Respuesta</h4>
-                            {question.question_type === 'single_choice' && (
-                              <p className="text-xs text-gray-500 mt-1">Solo puede haber una opción correcta</p>
-                            )}
-                          </div>
-                          {showAddOption !== question.id && (
-                            <button
-                              onClick={() => setShowAddOption(question.id)}
-                              className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
-                            >
-                              <Plus className="w-4 h-4" />
-                              Agregar Opción
-                            </button>
-                          )}
-                        </div>
-
-                        {showAddOption === question.id && (
-                          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                            <form onSubmit={(e) => handleAddOption(question.id, e)} className="space-y-3">
-                              <div>
-                                <input
-                                  type="text"
-                                  value={optionForm.option_text}
-                                  onChange={(e) => setOptionForm({ ...optionForm, option_text: e.target.value })}
-                                  placeholder="Texto de la opción"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                  required
-                                />
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    checked={optionForm.is_correct}
-                                    onChange={(e) => setOptionForm({ ...optionForm, is_correct: e.target.checked })}
-                                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                                  />
-                                  <span className="ml-2 text-sm text-gray-700">Es correcta</span>
-                                </label>
-                                <div className="flex gap-2">
-                                  <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium disabled:opacity-50"
-                                  >
-                                    Agregar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setShowAddOption(null);
-                                      setOptionForm({ option_text: '', is_correct: false });
-                                    }}
-                                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm font-medium"
-                                  >
-                                    Cancelar
-                                  </button>
-                                </div>
-                              </div>
-                            </form>
-                          </div>
-                        )}
-
+                        <h4 className="text-sm font-semibold text-gray-700 mb-2">Opciones de Respuesta</h4>
                         {(() => {
                           const questionOptions = optionsByQuestion[question.id];
                           const hasOptions = questionOptions && Array.isArray(questionOptions) && questionOptions.length > 0;
                           
                           return hasOptions ? (
-                            <div className="space-y-2 mt-2">
+                            <div className="space-y-2">
                               {questionOptions.map((option) => (
                                 <div
                                   key={option.id}
@@ -817,8 +955,8 @@ function EditQuizContent() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-500 mt-2">
-                              No hay opciones agregadas aún.
+                            <p className="text-sm text-gray-500">
+                              No hay opciones agregadas.
                             </p>
                           );
                         })()}

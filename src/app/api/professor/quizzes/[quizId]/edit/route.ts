@@ -223,12 +223,63 @@ export async function POST(
         const points = parseFloat(formData.get('points') as string);
         const require_justification = formData.get('require_justification') === '1';
         const question_file = formData.get('question_file') as File | null;
+        const optionsJson = formData.get('options') as string | null;
 
         if (!question_text || !question_type || !points) {
           return NextResponse.json(
             { error: 'Faltan campos obligatorios' },
             { status: 400 }
           );
+        }
+
+        // Validar opciones según el tipo de pregunta
+        let options: Array<{ text: string; is_correct: boolean }> = [];
+        if (question_type !== 'text' && optionsJson) {
+          try {
+            options = JSON.parse(optionsJson);
+          } catch (error) {
+            return NextResponse.json(
+              { error: 'Formato de opciones inválido' },
+              { status: 400 }
+            );
+          }
+
+          // Validaciones
+          if (question_type === 'true_false') {
+            if (options.length !== 2) {
+              return NextResponse.json(
+                { error: 'Las preguntas Verdadero/Falso deben tener exactamente 2 opciones' },
+                { status: 400 }
+              );
+            }
+          } else {
+            if (options.length < 2) {
+              return NextResponse.json(
+                { error: 'Debe agregar al menos 2 opciones de respuesta' },
+                { status: 400 }
+              );
+            }
+          }
+
+          // Validar que haya al menos una opción correcta
+          const hasCorrect = options.some(opt => opt.is_correct);
+          if (!hasCorrect) {
+            return NextResponse.json(
+              { error: 'Debe marcar al menos una opción como correcta' },
+              { status: 400 }
+            );
+          }
+
+          // Para selección única, solo puede haber una opción correcta
+          if (question_type === 'single_choice') {
+            const correctCount = options.filter(opt => opt.is_correct).length;
+            if (correctCount !== 1) {
+              return NextResponse.json(
+                { error: 'Las preguntas de selección única deben tener exactamente una opción correcta' },
+                { status: 400 }
+              );
+            }
+          }
         }
 
         let file_path = null;
@@ -254,10 +305,24 @@ export async function POST(
 
         const sort_order = (maxOrder?.max_order || 0) + 1;
 
-        await query(`
+        // Insertar pregunta
+        const questionResult = await query(`
           INSERT INTO quiz_questions (quiz_id, question, question_type, points, sort_order, require_justification, file_path)
           VALUES (?, ?, ?, ?, ?, ?, ?)
         `, [quizId, question_text.trim(), question_type, points, sort_order, require_justification ? 1 : 0, file_path]);
+
+        const questionId = (questionResult as any).insertId;
+
+        // Insertar opciones si existen
+        if (question_type !== 'text' && options.length > 0) {
+          for (let i = 0; i < options.length; i++) {
+            const option = options[i];
+            await query(`
+              INSERT INTO quiz_options (question_id, option_text, is_correct, sort_order)
+              VALUES (?, ?, ?, ?)
+            `, [questionId, option.text.trim(), option.is_correct ? 1 : 0, i + 1]);
+          }
+        }
 
         return NextResponse.json({
           success: true,
