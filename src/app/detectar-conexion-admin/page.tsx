@@ -45,8 +45,51 @@ export default function DetectarConexionAdminPage() {
   const [loadingConnections, setLoadingConnections] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isProfessor, setIsProfessor] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
-  // Verificar si es profesor
+  // Obtener sessionId actual
+  useEffect(() => {
+    const sid = localStorage.getItem('network_session_id');
+    setCurrentSessionId(sid);
+  }, []);
+
+  const fetchConnections = async () => {
+    try {
+      setLoadingConnections(true);
+      setError(null);
+      
+      // Incluir sessionId en la URL para excluir la propia conexión
+      const url = currentSessionId 
+        ? `/api/network/connections?exclude_session_id=${encodeURIComponent(currentSessionId)}`
+        : '/api/network/connections';
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setError('No tienes permisos para ver las conexiones');
+          return;
+        }
+        throw new Error('Error al obtener conexiones');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        // Filtrar también en el frontend como medida adicional
+        const filtered = (result.data || []).filter((conn: Connection) => {
+          return conn.session_id !== currentSessionId;
+        });
+        setConnections(filtered);
+      }
+    } catch (error) {
+      console.error('Error fetching connections:', error);
+      setError('Error al obtener las conexiones');
+    } finally {
+      setLoadingConnections(false);
+    }
+  };
+
+  // Verificar si es profesor y cargar conexiones
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -55,7 +98,10 @@ export default function DetectarConexionAdminPage() {
           const data = await response.json();
           if (data.success && data.user?.role === 'profesor') {
             setIsProfessor(true);
-            fetchConnections();
+            // Esperar a que currentSessionId esté disponible antes de cargar
+            if (currentSessionId) {
+              fetchConnections();
+            }
           } else {
             setError('Acceso denegado. Solo profesores pueden acceder a esta página.');
           }
@@ -69,44 +115,19 @@ export default function DetectarConexionAdminPage() {
       }
     };
     checkUser();
-  }, []);
-
-  const fetchConnections = async () => {
-    try {
-      setLoadingConnections(true);
-      setError(null);
-      const response = await fetch('/api/network/connections');
-      
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          setError('No tienes permisos para ver las conexiones');
-          return;
-        }
-        throw new Error('Error al obtener conexiones');
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        setConnections(result.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching connections:', error);
-      setError('Error al obtener las conexiones');
-    } finally {
-      setLoadingConnections(false);
-    }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSessionId]);
 
   // Auto-refresh cada 10 segundos
   useEffect(() => {
-    if (!isProfessor) return;
+    if (!isProfessor || !currentSessionId) return;
     
     const interval = setInterval(() => {
       fetchConnections();
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [isProfessor]);
+  }, [isProfessor, currentSessionId]);
 
   if (loading) {
     return (

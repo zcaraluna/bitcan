@@ -21,11 +21,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const professorId = decoded.id;
+    const excludeSessionId = request.nextUrl.searchParams.get('exclude_session_id') || null;
+
     // Obtener conexiones activas (la limpieza se hace automáticamente)
     const connections = getActiveConnections();
 
+    // Filtrar la conexión del profesor actual
+    const filteredConnections = connections.filter(conn => {
+      // Excluir por sessionId si se proporciona
+      if (excludeSessionId && conn.sessionId === excludeSessionId) {
+        return false;
+      }
+      // Excluir por userId del profesor
+      if (conn.userId === professorId) {
+        return false;
+      }
+      return true;
+    });
+
     // Convertir a formato de respuesta
-    const formattedConnections = connections.map(conn => ({
+    const formattedConnections = filteredConnections.map(conn => ({
       id: conn.sessionId,
       session_id: conn.sessionId,
       user_id: conn.userId,
