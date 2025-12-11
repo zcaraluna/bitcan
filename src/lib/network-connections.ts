@@ -63,3 +63,9 @@ export function getConnectionCount(): number {
   return activeConnections.size;
 }
 
+export function clearAllConnections(): number {
+  const count = activeConnections.size;
+  activeConnections.clear();
+  return count;
+}
+

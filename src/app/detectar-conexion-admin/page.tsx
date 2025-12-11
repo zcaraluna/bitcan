@@ -10,7 +10,8 @@ import {
   User,
   X,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 
 interface Connection {
@@ -46,6 +47,7 @@ export default function DetectarConexionAdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [isProfessor, setIsProfessor] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   // Obtener sessionId actual
   useEffect(() => {
@@ -118,6 +120,35 @@ export default function DetectarConexionAdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSessionId]);
 
+  const clearConnections = async () => {
+    if (!confirm('¿Estás seguro de que quieres limpiar todas las conexiones? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      setClearing(true);
+      const response = await fetch('/api/network/connections/clear', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al limpiar conexiones');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        setConnections([]);
+        alert(`Se eliminaron ${result.deletedCount} conexiones`);
+      }
+    } catch (error: any) {
+      console.error('Error clearing connections:', error);
+      setError(error.message || 'Error al limpiar las conexiones');
+    } finally {
+      setClearing(false);
+    }
+  };
+
   // Auto-refresh cada 10 segundos
   useEffect(() => {
     if (!isProfessor || !currentSessionId) return;
@@ -169,14 +200,24 @@ export default function DetectarConexionAdminPage() {
               Lista de personas conectadas al detector de conexión
             </p>
           </div>
-          <button
-            onClick={fetchConnections}
-            disabled={loadingConnections}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw className={`w-4 h-4 ${loadingConnections ? 'animate-spin' : ''}`} />
-            Actualizar
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={clearConnections}
+              disabled={clearing || connections.length === 0}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Trash2 className={`w-4 h-4 ${clearing ? 'animate-spin' : ''}`} />
+              {clearing ? 'Limpiando...' : 'Limpiar Todo'}
+            </button>
+            <button
+              onClick={fetchConnections}
+              disabled={loadingConnections}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingConnections ? 'animate-spin' : ''}`} />
+              Actualizar
+            </button>
+          </div>
         </div>
 
         {/* Lista de Conexiones */}
