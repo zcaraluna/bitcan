@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { activeConnections } from '../register/route';
+import { getActiveConnections } from '@/lib/network-connections';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,19 +21,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Limpiar conexiones inactivas antes de retornar
-    const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-    
-    for (const [sessionId, conn] of activeConnections.entries()) {
-      if (conn.lastActivity < oneHourAgo) {
-        activeConnections.delete(sessionId);
-      }
-    }
+    // Obtener conexiones activas (la limpieza se hace automáticamente)
+    const connections = getActiveConnections();
 
-    // Convertir Map a array para retornar
-    const connections = Array.from(activeConnections.values()).map(conn => ({
-      id: conn.sessionId, // Usar sessionId como ID
+    // Convertir a formato de respuesta
+    const formattedConnections = connections.map(conn => ({
+      id: conn.sessionId,
       session_id: conn.sessionId,
       user_id: conn.userId,
       ip_address: conn.ip,
@@ -57,13 +50,13 @@ export async function GET(request: NextRequest) {
     }));
 
     // Ordenar por última actividad (más reciente primero)
-    connections.sort((a, b) => 
+    formattedConnections.sort((a, b) => 
       new Date(b.last_activity).getTime() - new Date(a.last_activity).getTime()
     );
 
     return NextResponse.json({
       success: true,
-      data: connections
+      data: formattedConnections
     });
 
   } catch (error) {

@@ -1,32 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-
-// Almacenamiento en memoria de conexiones activas
-// En producción, podrías usar Redis o similar para múltiples instancias
-const activeConnections = new Map<string, {
-  sessionId: string;
-  userId: number | null;
-  userName: string | null;
-  userEmail: string | null;
-  userRole: string | null;
-  ip: string;
-  networkInfo: any;
-  userAgent: string;
-  connectedAt: Date;
-  lastActivity: Date;
-}>();
-
-// Limpiar conexiones inactivas cada minuto
-setInterval(() => {
-  const now = new Date();
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-  
-  for (const [sessionId, conn] of activeConnections.entries()) {
-    if (conn.lastActivity < oneHourAgo) {
-      activeConnections.delete(sessionId);
-    }
-  }
-}, 60000); // Cada minuto
+import { setConnection } from '@/lib/network-connections';
 
 function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -75,7 +49,6 @@ export async function POST(request: NextRequest) {
       const decoded = verifyToken(token);
       if (decoded) {
         userId = decoded.id;
-        // Intentar obtener más info del usuario (opcional, puede hacer fetch a /api/auth/me si necesitas más datos)
         userName = (decoded as any).name || null;
         userEmail = decoded.email || null;
         userRole = decoded.role || null;
@@ -83,8 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Actualizar o crear conexión en memoria
-    activeConnections.set(sessionId, {
-      sessionId,
+    setConnection(sessionId, {
       userId,
       userName,
       userEmail,
@@ -92,7 +64,6 @@ export async function POST(request: NextRequest) {
       ip: clientIP,
       networkInfo: networkInfo || {},
       userAgent,
-      connectedAt: activeConnections.get(sessionId)?.connectedAt || new Date(),
       lastActivity: new Date()
     });
 
@@ -109,6 +80,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// Exportar el Map para que pueda ser accedido desde otras rutas
-export { activeConnections };
