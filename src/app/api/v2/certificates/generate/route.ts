@@ -173,9 +173,12 @@ export async function POST(request: NextRequest) {
         // Generar PDF
         const pdfBuffer = await pdfGenerator.generatePDF(html);
 
-        // Mapear certificate_type a los valores de la base de datos
-        // La BD usa 'course' y 'module', pero el frontend usa 'course_completion' y 'module_completion'
-        const dbCertificateType = certificate_type === 'course_completion' ? 'course' : 'module';
+        // Validar que certificate_type sea un valor válido del ENUM
+        // Valores permitidos: 'course_completion', 'module_completion', 'achievement', 'participation'
+        const validCertificateTypes = ['course_completion', 'module_completion', 'achievement', 'participation'];
+        const dbCertificateType = validCertificateTypes.includes(certificate_type) 
+          ? certificate_type 
+          : 'course_completion'; // Valor por defecto
 
         // Guardar certificado en la base de datos
         const result = await query<ResultSetHeader>(

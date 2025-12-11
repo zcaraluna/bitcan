@@ -201,11 +201,11 @@ export async function POST(request: NextRequest) {
 
     for (const student_id of student_ids) {
       // Verificar si ya existe un certificado
-      const certificateType = action === 'generate_module_certificates' ? 'module' : 'course';
+      const certificateType = action === 'generate_module_certificates' ? 'module_completion' : 'course_completion';
       const existingCert = await queryOne(`
         SELECT COUNT(*) as total FROM certificates 
         WHERE user_id = ? AND course_id = ? 
-        AND (certificate_type = ? OR (? = 'course' AND certificate_type IS NULL))
+        AND (certificate_type = ? OR (? = 'course_completion' AND (certificate_type IS NULL OR certificate_type = 'course')))
       `, [student_id, course_id, certificateType, certificateType]);
 
       if (existingCert.total > 0) {

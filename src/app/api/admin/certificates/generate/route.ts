@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       const existingCert = await queryOne(`
         SELECT COUNT(*) as total FROM certificates 
         WHERE user_id = ? AND course_id = ? 
-        AND (certificate_type = 'course' OR certificate_type IS NULL)
+        AND (certificate_type = 'course_completion' OR certificate_type = 'course' OR certificate_type IS NULL)
       `, [student_id, course_id]);
 
       if (existingCert.total > 0) {
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
         INSERT INTO certificates (
           user_id, course_id, certificate_number, issue_date, completion_date,
           status, certificate_data, issued_by, created_at, updated_at, certificate_type
-        ) VALUES (?, ?, ?, ?, ?, 'issued', ?, ?, NOW(), NOW(), 'course')
+        ) VALUES (?, ?, ?, ?, ?, 'issued', ?, ?, NOW(), NOW(), 'course_completion')
       `, [
         student_id,
         course_id,
