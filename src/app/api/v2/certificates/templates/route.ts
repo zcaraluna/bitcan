@@ -131,12 +131,12 @@ export async function POST(request: NextRequest) {
       insertValues.push(css_styles || null);
     }
     
-    // Agregar campos finales
+    // Agregar campos finales (sin created_at y updated_at, se manejan con NOW())
     insertColumns.push('is_active', 'is_default', 'created_by', 'created_at', 'updated_at');
     insertValues.push(1, is_default ? 1 : 0, decoded.id);
     
-    const placeholders = insertColumns.map(() => '?').join(', ');
-    const sql = `INSERT INTO certificate_templates (${insertColumns.join(', ')}) VALUES (${placeholders}, NOW(), NOW())`;
+    const placeholders = insertColumns.map((col) => col === 'created_at' || col === 'updated_at' ? 'NOW()' : '?').join(', ');
+    const sql = `INSERT INTO certificate_templates (${insertColumns.join(', ')}) VALUES (${placeholders})`;
     
     const queryResult = await query(sql, insertValues) as any;
     result = Array.isArray(queryResult) ? queryResult[0] : queryResult;
