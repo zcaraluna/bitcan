@@ -419,15 +419,29 @@ export async function POST(request: NextRequest) {
         // Guardar TODOS los campos del módulo en certificate_data para certificados de módulo
         const certificate_data = action === 'generate_module_certificates' 
           ? JSON.stringify({ 
-              html: certificate_html, 
+              html: certificate_html,
+              template_id: template.id, // Guardar template_id para regeneración
+              student_name: student.name,
+              course_title: course.title, // IMPORTANTE: Guardar el título del curso completo
               module_name: module_name,
               requires_rating: requires_rating_value,
+              duration_hours: final_hours,
               module_hours: module_hours || null,
+              start_date: start_date,
               module_start_date: module_start_date || null,
+              completion_date: completion_date,
               module_completion_date: module_completion_date || null,
-              module_custom_signature: module_custom_signature || null
+              instructor_name: course.instructors || 'BITCAN',
+              custom_signature: signature_text,
+              module_custom_signature: module_custom_signature || null,
+              custom_message: custom_message || ''
             })
-          : JSON.stringify({ html: certificate_html });
+          : JSON.stringify({ 
+              html: certificate_html,
+              template_id: template.id,
+              student_name: student.name,
+              course_title: course.title
+            });
         
         console.log(`🔍 DEBUG - certificate_data guardado para módulo:`, {
           module_name: module_name,
