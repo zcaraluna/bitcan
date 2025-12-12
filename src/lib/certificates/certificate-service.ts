@@ -176,6 +176,7 @@ export class CertificateService {
 
   /**
    * Generar PDF de un certificado
+   * Regenera el HTML desde la plantilla actualizada para usar siempre la versión más reciente
    */
   async generatePDF(certificateId: number): Promise<Buffer> {
     const certificate = await this.getCertificate(certificateId);
@@ -183,12 +184,46 @@ export class CertificateService {
       throw new Error('Certificado no encontrado');
     }
 
-    // Buscar HTML en certificate_data (nuevo formato) o metadata (formato anterior)
     const certificateData = certificate.certificate_data || certificate.metadata;
-    const html = (certificateData as any)?.html_content || (certificateData as any)?.html;
+    const templateId = (certificateData as any)?.template_id;
+    
+    let html: string | null = null;
 
+    // Intentar regenerar desde la plantilla actualizada si tenemos template_id
+    if (templateId) {
+      try {
+        const template = await this.getTemplate(templateId);
+        if (template && template.template_html) {
+          // Preparar datos de renderizado desde certificate_data
+          const renderData = {
+            STUDENT_NAME: (certificateData as any)?.student_name || '',
+            COURSE_NAME: (certificateData as any)?.course_title || '',
+            MODULE_NAME: (certificateData as any)?.module_name,
+            DURATION_HOURS: (certificateData as any)?.duration_hours || (certificateData as any)?.module_hours || 0,
+            START_DATE: (certificateData as any)?.start_date || (certificateData as any)?.module_start_date || '',
+            COMPLETION_DATE: (certificateData as any)?.completion_date || (certificateData as any)?.module_completion_date || '',
+            ISSUE_DATE: certificate.issue_date ? new Date(certificate.issue_date).toLocaleDateString('es-PY') : new Date().toLocaleDateString('es-PY'),
+            issue_date: certificate.issue_date || new Date().toISOString().split('T')[0],
+            CERTIFICATE_NUMBER: certificate.certificate_number || '',
+            CUSTOM_SIGNATURE: (certificateData as any)?.custom_signature || (certificateData as any)?.module_custom_signature || (certificateData as any)?.instructor_name || '',
+            CUSTOM_MESSAGE: (certificateData as any)?.custom_message || '',
+            formatDate: (date: string) => new Date(date).toLocaleDateString('es-PY')
+          } as any;
+
+          const templateEngine = getTemplateEngine();
+          html = templateEngine.render(template.template_html, renderData);
+        }
+      } catch (error) {
+        console.warn('⚠️ No se pudo regenerar desde plantilla, usando HTML guardado:', error);
+      }
+    }
+
+    // Fallback: usar HTML guardado si no se pudo regenerar
     if (!html) {
-      throw new Error('HTML del certificado no encontrado');
+      html = (certificateData as any)?.html_content || (certificateData as any)?.html;
+      if (!html) {
+        throw new Error('HTML del certificado no encontrado');
+      }
     }
 
     const pdfGenerator = getPDFGenerator();
@@ -445,16 +480,30 @@ export class CertificateService {
   }
 
   private async getTemplate(templateId?: number) {
+    // Verificar qué columnas tiene la tabla
+    const hasHtmlContent = await queryOne<{count: number}>(`
+      SELECT COUNT(*) as count 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'certificate_templates' 
+      AND COLUMN_NAME = 'html_content'
+    `);
+    
+    const templateColumn = hasHtmlContent && hasHtmlContent.count > 0 ? 'html_content' : 'template_html';
+    const cssColumn = hasHtmlContent && hasHtmlContent.count > 0 ? 'css_styles' : 'template_css';
+
     if (templateId) {
       return await queryOne(
-        `SELECT id, name, html_content, css_styles FROM certificate_templates WHERE id = ? AND is_active = 1`,
+        `SELECT id, name, ${templateColumn} as template_html, ${cssColumn} as css_styles 
+         FROM certificate_templates WHERE id = ? AND is_active = 1`,
         [templateId]
       );
     }
 
     // Template por defecto
     return await queryOne(
-      `SELECT id, name, html_content, css_styles FROM certificate_templates WHERE is_default = 1 AND is_active = 1`
+      `SELECT id, name, ${templateColumn} as template_html, ${cssColumn} as css_styles 
+       FROM certificate_templates WHERE is_default = 1 AND is_active = 1`
     );
   }
 
