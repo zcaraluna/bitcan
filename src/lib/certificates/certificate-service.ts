@@ -195,10 +195,17 @@ export class CertificateService {
         const template = await this.getTemplate(templateId);
         if (template && template.template_html) {
           // Preparar datos de renderizado desde certificate_data
+          const courseTitle = (certificateData as any)?.course_title || '';
+          const moduleName = (certificateData as any)?.module_name;
+          
+          console.log(`🔄 DEBUG - Regenerando PDF desde plantilla:`);
+          console.log(`   COURSE_NAME (desde certificate_data): "${courseTitle}"`);
+          console.log(`   MODULE_NAME (desde certificate_data): "${moduleName}"`);
+          
           const renderData = {
             STUDENT_NAME: (certificateData as any)?.student_name || '',
-            COURSE_NAME: (certificateData as any)?.course_title || '',
-            MODULE_NAME: (certificateData as any)?.module_name,
+            COURSE_NAME: courseTitle,
+            MODULE_NAME: moduleName,
             DURATION_HOURS: (certificateData as any)?.duration_hours || (certificateData as any)?.module_hours || 0,
             START_DATE: (certificateData as any)?.start_date || (certificateData as any)?.module_start_date || '',
             COMPLETION_DATE: (certificateData as any)?.completion_date || (certificateData as any)?.module_completion_date || '',

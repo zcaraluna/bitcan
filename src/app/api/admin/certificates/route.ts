@@ -394,10 +394,21 @@ export async function POST(request: NextRequest) {
       // Generar HTML del certificado
       // Nota: generateCertificateHTML usa reemplazo simple, no Handlebars
       // Por lo tanto, solo pasamos valores ya formateados
+      // IMPORTANTE: Para módulos, COURSE_NAME debe ser el nombre del curso completo,
+      // no el nombre del módulo. MODULE_NAME es el nombre del módulo específico.
+      const courseNameForTemplate = course.title;
+      const moduleNameForTemplate = action === 'generate_module_certificates' ? module_name : undefined;
+      
+      console.log(`📋 DEBUG - Valores para plantilla de certificado de módulo:`);
+      console.log(`   COURSE_NAME (curso completo): "${courseNameForTemplate}"`);
+      console.log(`   MODULE_NAME (módulo específico): "${moduleNameForTemplate}"`);
+      console.log(`   course.title de BD: "${course.title}"`);
+      console.log(`   module_name recibido: "${module_name}"`);
+      
         const certificate_html = generateCertificateHTML(template.template_html, {
           STUDENT_NAME: student.name,
-          COURSE_NAME: action === 'generate_module_certificates' ? course.title : course.title,
-          MODULE_NAME: action === 'generate_module_certificates' ? module_name : undefined,
+          COURSE_NAME: courseNameForTemplate, // Nombre del curso completo
+          MODULE_NAME: moduleNameForTemplate, // Nombre del módulo específico
           DURATION_HOURS: final_hours,
           START_DATE: new Date(start_date).toLocaleDateString('es-PY'),
           COMPLETION_DATE: new Date(completion_date).toLocaleDateString('es-PY'),
