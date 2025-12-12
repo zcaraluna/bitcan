@@ -22,6 +22,21 @@ export async function PUT(
     const body = await request.json();
     const { name, description, template_html, is_default, is_active } = body;
 
+    // Verificar qué columnas tiene la tabla
+    const columns = await query<{COLUMN_NAME: string}>(
+      `SELECT COLUMN_NAME 
+       FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() 
+       AND TABLE_NAME = 'certificate_templates' 
+       AND COLUMN_NAME IN ('html_content', 'template_html', 'css_styles', 'template_css')`
+    ) as any[];
+    
+    const columnNames = columns.map((col: any) => col.COLUMN_NAME);
+    const hasHtmlContent = columnNames.includes('html_content');
+    const hasTemplateHtml = columnNames.includes('template_html');
+    const hasCssStyles = columnNames.includes('css_styles');
+    const hasTemplateCss = columnNames.includes('template_css');
+
     // Si es plantilla por defecto, desactivar otras plantillas por defecto
     if (is_default) {
       await query(`
@@ -31,11 +46,29 @@ export async function PUT(
       `, [templateId]);
     }
 
-    await query(`
-      UPDATE certificate_templates 
-      SET name = ?, description = ?, template_html = ?, is_default = ?, is_active = ?, updated_at = NOW()
-      WHERE id = ?
-    `, [name, description, template_html, is_default ? 1 : 0, is_active ? 1 : 0, templateId]);
+    // Construir UPDATE dinámicamente según las columnas disponibles
+    const updates: string[] = ['name = ?', 'description = ?'];
+    const values: any[] = [name, description];
+
+    // Actualizar HTML en las columnas que existan
+    if (hasHtmlContent && hasTemplateHtml) {
+      updates.push('html_content = ?', 'template_html = ?');
+      values.push(template_html, template_html); // Mismo contenido en ambas
+    } else if (hasHtmlContent) {
+      updates.push('html_content = ?');
+      values.push(template_html);
+    } else if (hasTemplateHtml) {
+      updates.push('template_html = ?');
+      values.push(template_html);
+    }
+
+    updates.push('is_default = ?', 'is_active = ?', 'updated_at = NOW()');
+    values.push(is_default ? 1 : 0, is_active ? 1 : 0, templateId);
+
+    await query(
+      `UPDATE certificate_templates SET ${updates.join(', ')} WHERE id = ?`,
+      values
+    );
 
     return NextResponse.json({
       success: true,

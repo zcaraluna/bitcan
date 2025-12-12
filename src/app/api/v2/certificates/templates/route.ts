@@ -23,8 +23,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
     }
 
+    // Verificar qué columnas tiene la tabla
+    const hasHtmlContent = await queryOne<{count: number}>(`
+      SELECT COUNT(*) as count 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'certificate_templates' 
+      AND COLUMN_NAME = 'html_content'
+    `);
+    
+    const templateColumn = hasHtmlContent && hasHtmlContent.count > 0 ? 'html_content' : 'template_html';
+    const cssColumn = hasHtmlContent && hasHtmlContent.count > 0 ? 'css_styles' : 'template_css';
+
     const templates = await query(
-      `SELECT id, name, description, template_html as html_content, template_css as css_styles, is_active, is_default, created_at, updated_at
+      `SELECT id, name, description, ${templateColumn} as html_content, ${cssColumn} as css_styles, is_active, is_default, created_at, updated_at
        FROM certificate_templates
        ORDER BY is_default DESC, name ASC`
     );

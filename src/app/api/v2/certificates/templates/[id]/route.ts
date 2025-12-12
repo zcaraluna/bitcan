@@ -25,8 +25,20 @@ export async function GET(
       return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
     }
 
+    // Verificar qué columnas tiene la tabla
+    const hasHtmlContent = await queryOne<{count: number}>(`
+      SELECT COUNT(*) as count 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'certificate_templates' 
+      AND COLUMN_NAME = 'html_content'
+    `);
+    
+    const templateColumn = hasHtmlContent && hasHtmlContent.count > 0 ? 'html_content' : 'template_html';
+    const cssColumn = hasHtmlContent && hasHtmlContent.count > 0 ? 'css_styles' : 'template_css';
+
     const template = await queryOne(
-      `SELECT id, name, description, template_html, template_css as css_styles, is_active, is_default, created_at, updated_at 
+      `SELECT id, name, description, ${templateColumn} as template_html, ${cssColumn} as css_styles, is_active, is_default, created_at, updated_at 
        FROM certificate_templates WHERE id = ?`,
       [params.id]
     );
@@ -93,6 +105,21 @@ export async function PUT(
       );
     }
 
+    // Verificar qué columnas tiene la tabla
+    const columns = await query<{COLUMN_NAME: string}>(
+      `SELECT COLUMN_NAME 
+       FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() 
+       AND TABLE_NAME = 'certificate_templates' 
+       AND COLUMN_NAME IN ('html_content', 'template_html', 'css_styles', 'template_css')`
+    ) as any[];
+    
+    const columnNames = columns.map((col: any) => col.COLUMN_NAME);
+    const hasHtmlContent = columnNames.includes('html_content');
+    const hasTemplateHtml = columnNames.includes('template_html');
+    const hasCssStyles = columnNames.includes('css_styles');
+    const hasTemplateCss = columnNames.includes('template_css');
+
     // Actualizar plantilla
     const updates: string[] = [];
     const values: any[] = [];
@@ -105,14 +132,35 @@ export async function PUT(
       updates.push('description = ?');
       values.push(description);
     }
+    
+    // Actualizar HTML en las columnas que existan
     if (html_content !== undefined) {
-      updates.push('template_html = ?');
-      values.push(html_content);
+      if (hasHtmlContent && hasTemplateHtml) {
+        updates.push('html_content = ?', 'template_html = ?');
+        values.push(html_content, html_content); // Mismo contenido en ambas
+      } else if (hasHtmlContent) {
+        updates.push('html_content = ?');
+        values.push(html_content);
+      } else if (hasTemplateHtml) {
+        updates.push('template_html = ?');
+        values.push(html_content);
+      }
     }
+    
+    // Actualizar CSS en las columnas que existan
     if (css_styles !== undefined) {
-      updates.push('template_css = ?');
-      values.push(css_styles);
+      if (hasCssStyles && hasTemplateCss) {
+        updates.push('css_styles = ?', 'template_css = ?');
+        values.push(css_styles, css_styles);
+      } else if (hasCssStyles) {
+        updates.push('css_styles = ?');
+        values.push(css_styles);
+      } else if (hasTemplateCss) {
+        updates.push('template_css = ?');
+        values.push(css_styles);
+      }
     }
+    
     if (is_active !== undefined) {
       updates.push('is_active = ?');
       values.push(is_active ? 1 : 0);
