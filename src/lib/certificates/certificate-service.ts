@@ -194,17 +194,24 @@ export class CertificateService {
       try {
         const template = await this.getTemplate(templateId);
         if (template && template.template_html) {
-          // Preparar datos de renderizado desde certificate_data
-          const courseTitle = (certificateData as any)?.course_title || '';
+          // Obtener el nombre del curso directamente de la base de datos
+          // para asegurar que siempre sea correcto, no confiar en certificate_data
+          const courseInfo = await queryOne<{title: string}>(
+            `SELECT title FROM courses WHERE id = ?`,
+            [certificate.course_id]
+          );
+          
+          const courseTitle = courseInfo?.title || (certificateData as any)?.course_title || '';
           const moduleName = (certificateData as any)?.module_name;
           
           console.log(`🔄 DEBUG - Regenerando PDF desde plantilla:`);
-          console.log(`   COURSE_NAME (desde certificate_data): "${courseTitle}"`);
+          console.log(`   COURSE_NAME (desde BD courses.title): "${courseTitle}"`);
           console.log(`   MODULE_NAME (desde certificate_data): "${moduleName}"`);
+          console.log(`   course_id: ${certificate.course_id}`);
           
           const renderData = {
             STUDENT_NAME: (certificateData as any)?.student_name || '',
-            COURSE_NAME: courseTitle,
+            COURSE_NAME: courseTitle, // Siempre desde la BD, no desde certificate_data
             MODULE_NAME: moduleName,
             DURATION_HOURS: (certificateData as any)?.duration_hours || (certificateData as any)?.module_hours || 0,
             START_DATE: (certificateData as any)?.start_date || (certificateData as any)?.module_start_date || '',
