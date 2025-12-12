@@ -105,32 +105,35 @@ export async function POST(request: NextRequest) {
     
     if (hasHtmlContent) {
       // Usar html_content y css_styles (estructura del VPS)
-      result = await query<ResultSetHeader>(
+      const queryResult = await query(
         `INSERT INTO certificate_templates 
          (name, description, html_content${hasCssStyles ? ', css_styles' : ''}, is_active, is_default, created_by, created_at, updated_at)
          VALUES (?, ?, ?${hasCssStyles ? ', ?' : ''}, 1, ?, ?, NOW(), NOW())`,
         hasCssStyles 
           ? [name, description, html_content, css_styles || null, is_default ? 1 : 0, decoded.id]
           : [name, description, html_content, is_default ? 1 : 0, decoded.id]
-      );
+      ) as any;
+      result = Array.isArray(queryResult) ? queryResult[0] : queryResult;
     } else if (hasTemplateHtml) {
       // Usar template_html y template_css (estructura antigua)
-      result = await query<ResultSetHeader>(
+      const queryResult = await query(
         `INSERT INTO certificate_templates 
          (name, description, template_html${hasTemplateCss ? ', template_css' : ''}, is_active, is_default, created_by, created_at, updated_at)
          VALUES (?, ?, ?${hasTemplateCss ? ', ?' : ''}, 1, ?, ?, NOW(), NOW())`,
         hasTemplateCss
           ? [name, description, html_content, css_styles || null, is_default ? 1 : 0, decoded.id]
           : [name, description, html_content, is_default ? 1 : 0, decoded.id]
-      );
+      ) as any;
+      result = Array.isArray(queryResult) ? queryResult[0] : queryResult;
     } else {
       // Intentar con html_content por defecto (asumir estructura del VPS)
-      result = await query<ResultSetHeader>(
+      const queryResult = await query(
         `INSERT INTO certificate_templates 
          (name, description, html_content, css_styles, is_active, is_default, created_by, created_at, updated_at)
          VALUES (?, ?, ?, ?, 1, ?, ?, NOW(), NOW())`,
         [name, description, html_content, css_styles || null, is_default ? 1 : 0, decoded.id]
-      );
+      ) as any;
+      result = Array.isArray(queryResult) ? queryResult[0] : queryResult;
     }
 
     return NextResponse.json({
