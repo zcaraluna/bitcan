@@ -103,38 +103,43 @@ export async function POST(request: NextRequest) {
     
     let result: ResultSetHeader;
     
-    if (hasHtmlContent) {
-      // Usar html_content y css_styles (estructura del VPS)
-      const queryResult = await query(
-        `INSERT INTO certificate_templates 
-         (name, description, html_content${hasCssStyles ? ', css_styles' : ''}, is_active, is_default, created_by, created_at, updated_at)
-         VALUES (?, ?, ?${hasCssStyles ? ', ?' : ''}, 1, ?, ?, NOW(), NOW())`,
-        hasCssStyles 
-          ? [name, description, html_content, css_styles || null, is_default ? 1 : 0, decoded.id]
-          : [name, description, html_content, is_default ? 1 : 0, decoded.id]
-      ) as any;
-      result = Array.isArray(queryResult) ? queryResult[0] : queryResult;
+    // Construir la lista de columnas y valores dinámicamente
+    const insertColumns: string[] = ['name', 'description'];
+    const insertValues: any[] = [name, description];
+    
+    // Si tiene ambas columnas, insertar en ambas
+    if (hasHtmlContent && hasTemplateHtml) {
+      insertColumns.push('html_content', 'template_html');
+      insertValues.push(html_content, html_content); // Mismo contenido en ambas
+    } else if (hasHtmlContent) {
+      insertColumns.push('html_content');
+      insertValues.push(html_content);
     } else if (hasTemplateHtml) {
-      // Usar template_html y template_css (estructura antigua)
-      const queryResult = await query(
-        `INSERT INTO certificate_templates 
-         (name, description, template_html${hasTemplateCss ? ', template_css' : ''}, is_active, is_default, created_by, created_at, updated_at)
-         VALUES (?, ?, ?${hasTemplateCss ? ', ?' : ''}, 1, ?, ?, NOW(), NOW())`,
-        hasTemplateCss
-          ? [name, description, html_content, css_styles || null, is_default ? 1 : 0, decoded.id]
-          : [name, description, html_content, is_default ? 1 : 0, decoded.id]
-      ) as any;
-      result = Array.isArray(queryResult) ? queryResult[0] : queryResult;
-    } else {
-      // Intentar con html_content por defecto (asumir estructura del VPS)
-      const queryResult = await query(
-        `INSERT INTO certificate_templates 
-         (name, description, html_content, css_styles, is_active, is_default, created_by, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 1, ?, ?, NOW(), NOW())`,
-        [name, description, html_content, css_styles || null, is_default ? 1 : 0, decoded.id]
-      ) as any;
-      result = Array.isArray(queryResult) ? queryResult[0] : queryResult;
+      insertColumns.push('template_html');
+      insertValues.push(html_content);
     }
+    
+    // Agregar CSS
+    if (hasCssStyles && hasTemplateCss) {
+      insertColumns.push('css_styles', 'template_css');
+      insertValues.push(css_styles || null, css_styles || null);
+    } else if (hasCssStyles) {
+      insertColumns.push('css_styles');
+      insertValues.push(css_styles || null);
+    } else if (hasTemplateCss) {
+      insertColumns.push('template_css');
+      insertValues.push(css_styles || null);
+    }
+    
+    // Agregar campos finales
+    insertColumns.push('is_active', 'is_default', 'created_by', 'created_at', 'updated_at');
+    insertValues.push(1, is_default ? 1 : 0, decoded.id);
+    
+    const placeholders = insertColumns.map(() => '?').join(', ');
+    const sql = `INSERT INTO certificate_templates (${insertColumns.join(', ')}) VALUES (${placeholders}, NOW(), NOW())`;
+    
+    const queryResult = await query(sql, insertValues) as any;
+    result = Array.isArray(queryResult) ? queryResult[0] : queryResult;
 
     return NextResponse.json({
       success: true,
