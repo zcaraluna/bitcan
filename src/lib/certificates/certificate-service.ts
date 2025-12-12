@@ -16,6 +16,24 @@ import { getTemplateEngine } from './template-engine';
 import { getPDFGenerator } from './pdf-generator';
 import type { ResultSetHeader } from 'mysql2';
 
+/**
+ * Función helper para parsear JSON de forma segura
+ * Maneja casos donde el valor ya es un objeto o es una cadena JSON
+ */
+export function safeParseJSON(value: any): any {
+  if (!value) return {};
+  if (typeof value === 'object') return value; // Ya es un objeto
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch (e) {
+      console.warn('Error parsing JSON:', value, e);
+      return {};
+    }
+  }
+  return {};
+}
+
 export class CertificateService {
   /**
    * Generar número de certificado único
@@ -204,8 +222,8 @@ export class CertificateService {
     return {
       ...result,
       issued_at: result.issue_date ? new Date(result.issue_date).toISOString() : new Date().toISOString(),
-      metadata: result.metadata ? JSON.parse(result.metadata) : {},
-      certificate_data: result.certificate_data ? JSON.parse(result.certificate_data) : {},
+      metadata: safeParseJSON(result.metadata),
+      certificate_data: safeParseJSON(result.certificate_data),
     };
   }
 
@@ -265,12 +283,14 @@ export class CertificateService {
 
     const results = await query(sql, params);
 
-    return results.map((r: any) => ({
-      ...r,
-      issued_at: r.issue_date ? new Date(r.issue_date).toISOString() : new Date().toISOString(),
-      metadata: r.metadata ? JSON.parse(r.metadata) : {},
-      certificate_data: r.certificate_data ? JSON.parse(r.certificate_data) : {},
-    }));
+    return results.map((r: any) => {
+      return {
+        ...r,
+        issued_at: r.issue_date ? new Date(r.issue_date).toISOString() : new Date().toISOString(),
+        metadata: safeParseJSON(r.metadata),
+        certificate_data: safeParseJSON(r.certificate_data),
+      };
+    });
   }
 
   /**

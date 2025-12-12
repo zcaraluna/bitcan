@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         JOIN courses co ON uc.course_id = co.id
         LEFT JOIN certificates c ON uc.course_id = c.course_id 
           AND uc.user_id = c.user_id 
-          AND (c.certificate_type = 'course' OR c.certificate_type IS NULL)
+          AND (c.certificate_type = 'course_completion' OR c.certificate_type = 'course' OR c.certificate_type IS NULL)
         WHERE uc.user_id = ? 
           AND uc.completed = 1 
           AND c.id IS NULL

@@ -50,8 +50,6 @@ export async function GET(request: NextRequest) {
       ORDER BY uc.completed_at DESC, u.name ASC
     `, [courseId]);
 
-    console.log(`Estudiantes elegibles para curso ${courseId}:`, students.length);
-
     return NextResponse.json({
       success: true,
       data: students

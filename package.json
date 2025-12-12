@@ -18,7 +18,9 @@
     "deploy": "npm run build && pm2 restart bitcan",
     "migrations:check": "node scripts/check-migrations.js",
     "migrations:dry-run": "node scripts/run-migrations.js --dry-run",
-    "migrations:run": "node scripts/run-migrations.js"
+    "migrations:run": "node scripts/run-migrations.js",
+    "certificates:check-duplicates": "node scripts/check-duplicate-certificates.js",
+    "certificates:debug": "node scripts/debug-certificates.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

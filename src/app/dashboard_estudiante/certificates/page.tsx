@@ -61,7 +61,23 @@ export default function MisCertificados() {
       const response = await fetch('/api/v2/certificates');
       if (response.ok) {
         const data = await response.json();
-        setCertificates(data.data || []);
+        console.log('🔍 DEBUG - Certificados recibidos del API:', data);
+        console.log('📊 Total certificados:', data.data?.length || 0);
+        console.log('📋 Tipos de certificados:', data.data?.map((c: any) => ({
+          id: c.id,
+          type: c.certificate_type,
+          course: c.course_title,
+          module: c.certificate_data?.module_name || 'N/A'
+        })) || []);
+        
+        const certificates = data.data || [];
+        const moduleCerts = certificates.filter((c: any) => c.certificate_type === 'module_completion' || c.certificate_type === 'module');
+        const courseCerts = certificates.filter((c: any) => c.certificate_type === 'course_completion' || c.certificate_type === 'course' || !c.certificate_type);
+        
+        console.log(`✅ Certificados de módulo: ${moduleCerts.length}`);
+        console.log(`✅ Certificados de curso: ${courseCerts.length}`);
+        
+        setCertificates(certificates);
         setCompletedCoursesWithoutCert(data.completed_courses_without_cert || []);
       } else {
         setError('Error al cargar los certificados');
@@ -300,7 +316,7 @@ export default function MisCertificados() {
                 {certificates.map((certificate) => (
                   <div key={certificate.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
                     <div className="text-center mb-4">
-                      {certificate.certificate_type === 'module' ? (
+                      {certificate.certificate_type === 'module_completion' || certificate.certificate_type === 'module' ? (
                         <>
                           <Award className="w-12 h-12 text-green-600 mx-auto mb-3" />
                           <h5 className="font-semibold text-gray-900">{certificate.course_title}</h5>
@@ -329,7 +345,7 @@ export default function MisCertificados() {
                       Generado el {new Date(certificate.created_at || (certificate as any).issue_date).toLocaleDateString('es-ES')}
                     </div>
                     
-                    {certificate.certificate_type === 'module' ? (
+                    {(certificate.certificate_type === 'module_completion' || certificate.certificate_type === 'module') ? (
                       // Certificado de módulo - Verificar si requiere calificación
                       (() => {
                         const requiresRating = certificate.certificate_data?.requires_rating === true;

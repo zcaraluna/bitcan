@@ -29,8 +29,22 @@ export async function POST(request: NextRequest) {
       manual_start_date,
       manual_completion_date,
       custom_message,
-      requires_rating
+      requires_rating,
+      // Campos específicos de módulo
+      module_hours,
+      module_start_date,
+      module_completion_date,
+      module_custom_signature
     } = await request.json();
+    
+    console.log(`🔍 DEBUG V2 - requires_rating recibido: ${requires_rating} (tipo: ${typeof requires_rating})`);
+    console.log(`🔍 DEBUG V2 - Campos de módulo:`, {
+      module_name,
+      module_hours,
+      module_start_date,
+      module_completion_date,
+      module_custom_signature
+    });
 
     if (!course_id || !student_ids || !Array.isArray(student_ids) || student_ids.length === 0) {
       return NextResponse.json(
@@ -200,14 +214,21 @@ export async function POST(request: NextRequest) {
               student_name: student.name,
               course_title: courseName,
               module_name: certificate_type === 'module_completion' ? module_name : undefined,
-              start_date: manual_start_date || enrollment.started_at,
-              completion_date: manual_completion_date || enrollment.completed_at,
+              start_date: manual_start_date || module_start_date || enrollment?.started_at,
+              completion_date: manual_completion_date || module_completion_date || enrollment?.completed_at,
               duration_hours: hoursToUse,
               instructor_name: course.instructor_name,
-              custom_signature: custom_signature,
+              custom_signature: custom_signature || module_custom_signature,
               custom_message: custom_message,
               html_content: html,
-              requires_rating: certificate_type === 'module_completion' ? (requires_rating || false) : undefined
+              // Campos específicos de módulo
+              requires_rating: certificate_type === 'module_completion' 
+                ? (requires_rating === true || requires_rating === 'true' || requires_rating === 1) 
+                : undefined,
+              module_hours: certificate_type === 'module_completion' ? (module_hours || null) : undefined,
+              module_start_date: certificate_type === 'module_completion' ? (module_start_date || null) : undefined,
+              module_completion_date: certificate_type === 'module_completion' ? (module_completion_date || null) : undefined,
+              module_custom_signature: certificate_type === 'module_completion' ? (module_custom_signature || null) : undefined
             }),
             decoded.id
           ]

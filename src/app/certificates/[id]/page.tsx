@@ -1,4 +1,5 @@
 import { queryOne } from '@/lib/db';
+import { safeParseJSON } from '@/lib/certificates/certificate-service';
 
 interface PageProps {
   params: {
@@ -34,7 +35,7 @@ export default async function CertificatePage({ params }: PageProps) {
       );
     }
 
-    const certificateData = JSON.parse(certificate.certificate_data);
+    const certificateData = safeParseJSON(certificate.certificate_data);
     
     // Renderizar el HTML del certificado
     return (

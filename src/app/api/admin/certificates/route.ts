@@ -154,11 +154,79 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { action, course_id, student_ids, module_name, manual_hours, manual_start_date, manual_completion_date, custom_signature, custom_message } = body;
+    
+    // LOGGING DETALLADO AL INICIO - FORZAR VISIBILIDAD
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('📥 REQUEST RECIBIDO - Generación de Certificados');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('Body recibido:', JSON.stringify(body, null, 2));
+    console.log('Action recibida:', body.action);
+    console.log('Module name recibido:', body.module_name);
+    console.error('🔴 BACKEND LOG - Action:', body.action, '| Module:', body.module_name); // Usar console.error para que siempre se vea
+    
+    // VALIDACIÓN CRÍTICA AL INICIO: Verificar que la acción sea válida
+    const { 
+      action, 
+      course_id, 
+      student_ids, 
+      module_name, 
+      manual_hours, 
+      manual_start_date, 
+      manual_completion_date, 
+      custom_signature,
+      module_hours,
+      module_start_date,
+      module_completion_date,
+      module_custom_signature,
+      custom_message,
+      requires_rating  // Agregar requires_rating a la extracción del body
+    } = body;
+    
+    console.log(`🔍 DEBUG - requires_rating recibido en body: ${requires_rating} (tipo: ${typeof requires_rating})`);
+
+    console.log(`🎯 Acción recibida: "${action}"`);
+    console.log(`📚 Curso ID: ${course_id}`);
+    console.log(`👥 Estudiantes: ${student_ids?.length || 0}`);
+    console.log(`📝 Nombre de módulo: ${module_name || 'N/A'}`);
+
+    // PROTECCIÓN CRÍTICA: Si la acción es generar módulos, asegurar que NO se procese como curso
+    if (action === 'generate_module_certificates') {
+      console.log('🔒🔒🔒 MODO MÓDULO ACTIVADO 🔒🔒🔒');
+      console.log('   ⚠️  Solo se generarán certificados de módulo.');
+      console.log('   🚫 Certificados de curso están BLOQUEADOS.');
+      
+      // Verificar que module_name esté presente (requerido para módulos)
+      if (!module_name || !module_name.trim()) {
+        console.error('❌ ERROR: Nombre de módulo faltante');
+        return NextResponse.json({ 
+          error: 'El nombre del módulo es requerido para generar certificados de módulo' 
+        }, { status: 400 });
+      }
+    } else if (action === 'generate_certificates') {
+      console.log('🔒🔒🔒 MODO CURSO ACTIVADO 🔒🔒🔒');
+      console.log('   ⚠️  Solo se generarán certificados de curso completo.');
+      console.log('   🚫 Certificados de módulo NO se generarán.');
+    } else {
+      console.error(`❌ ERROR: Acción inválida: "${action}"`);
+      return NextResponse.json({ 
+        error: `Acción inválida: ${action}. Acciones válidas: 'generate_certificates' o 'generate_module_certificates'` 
+      }, { status: 400 });
+    }
+    
+    // Mapear parámetros del frontend (module_*) a parámetros del backend (manual_*)
+    // Usar parámetros de módulo si están presentes, sino usar los manuales
+    const hours_to_use = module_hours || manual_hours;
+    const start_date_to_use = module_start_date || manual_start_date;
+    const completion_date_to_use = module_completion_date || manual_completion_date;
+    const signature_to_use = module_custom_signature || custom_signature;
 
     if (!course_id || !student_ids || student_ids.length === 0) {
       return NextResponse.json({ error: 'Datos requeridos' }, { status: 400 });
     }
+
+    // PROTECCIÓN ADICIONAL: Determinar el tipo de certificado UNA SOLA VEZ al inicio
+    const expectedCertificateType = action === 'generate_module_certificates' ? 'module_completion' : 'course_completion';
+    console.log(`🎯 Tipo de certificado esperado: ${expectedCertificateType} (acción: ${action})`);
 
     // Obtener información del curso
     const course = await queryOne(`
@@ -178,12 +246,22 @@ export async function POST(request: NextRequest) {
     // Obtener plantilla según el tipo de certificado
     let template;
     if (action === 'generate_module_certificates') {
-      // Para módulos, usar la segunda plantilla (plantilla de módulo)
+      // Para módulos, buscar plantilla de módulo (is_default = 0) o usar la por defecto si no existe
       template = await queryOne(`
         SELECT template_html FROM certificate_templates 
         WHERE is_active = 1 AND is_default = 0
         LIMIT 1
       `);
+      
+      // Si no hay plantilla de módulo, usar la por defecto
+      if (!template) {
+        console.warn('No se encontró plantilla de módulo, usando plantilla por defecto');
+        template = await queryOne(`
+          SELECT template_html FROM certificate_templates 
+          WHERE is_default = 1 AND is_active = 1 
+          LIMIT 1
+        `);
+      }
     } else {
       // Para curso completo, usar la plantilla por defecto
       template = await queryOne(`
@@ -194,103 +272,304 @@ export async function POST(request: NextRequest) {
     }
 
     if (!template) {
+      console.error('No hay plantilla de certificado disponible');
       return NextResponse.json({ error: 'No hay plantilla de certificado disponible' }, { status: 404 });
     }
+    
+    console.log(`✅ Plantilla encontrada para acción: ${action}`);
 
     let generated_count = 0;
+    let skipped_count = 0;
+    const errors: Array<{ student_id: number; reason: string }> = [];
+
+    console.log(`🔄 Procesando ${student_ids.length} estudiantes para ${action}`);
 
     for (const student_id of student_ids) {
-      // Verificar si ya existe un certificado
-      const certificateType = action === 'generate_module_certificates' ? 'module_completion' : 'course_completion';
-      const existingCert = await queryOne(`
-        SELECT COUNT(*) as total FROM certificates 
-        WHERE user_id = ? AND course_id = ? 
-        AND (certificate_type = ? OR (? = 'course_completion' AND (certificate_type IS NULL OR certificate_type = 'course')))
-      `, [student_id, course_id, certificateType, certificateType]);
+      try {
+        // USAR EL TIPO DETERMINADO AL INICIO - NO RECALCULAR
+        const certificateType = expectedCertificateType;
+        
+        // VALIDACIÓN FINAL: Asegurar que el tipo sea correcto
+        if (action === 'generate_module_certificates' && certificateType !== 'module_completion') {
+          console.error(`❌ ERROR CRÍTICO: Acción es generate_module_certificates pero certificateType es ${certificateType}`);
+          errors.push({ 
+            student_id, 
+            reason: `Error crítico: tipo de certificado incorrecto. Esperado: module_completion, Obtenido: ${certificateType}` 
+          });
+          continue;
+        }
 
-      if (existingCert.total > 0) {
-        continue; // Ya existe un certificado
-      }
+        if (action !== 'generate_module_certificates' && certificateType !== 'course_completion') {
+          console.error(`❌ ERROR CRÍTICO: Acción no es generate_module_certificates pero certificateType es ${certificateType}`);
+          errors.push({ 
+            student_id, 
+            reason: `Error crítico: tipo de certificado incorrecto. Esperado: course_completion, Obtenido: ${certificateType}` 
+          });
+          continue;
+        }
+        
+        console.log(`🔍 Verificando certificados existentes para estudiante ${student_id}, curso ${course_id}, tipo: ${certificateType}`);
+        
+        const existingCert = await queryOne(`
+          SELECT COUNT(*) as total FROM certificates 
+          WHERE user_id = ? AND course_id = ? 
+          AND certificate_type = ?
+        `, [student_id, course_id, certificateType]);
 
-      // Obtener información del estudiante
-      const student = await queryOne(`
-        SELECT name, email FROM users WHERE id = ?
-      `, [student_id]);
+        if (existingCert && existingCert.total > 0) {
+          console.log(`⏭️  Estudiante ${student_id}: Ya existe certificado de tipo ${certificateType}`);
+          skipped_count++;
+          continue; // Ya existe un certificado de este tipo
+        }
 
-      if (!student) {
-        continue;
-      }
+        // IMPORTANTE: Verificar que NO se genere un certificado de curso cuando se genera uno de módulo
+        if (action === 'generate_module_certificates') {
+          // Verificar si ya existe un certificado de curso completo para este estudiante
+          const existingCourseCert = await queryOne(`
+            SELECT COUNT(*) as total FROM certificates 
+            WHERE user_id = ? AND course_id = ? 
+            AND certificate_type = 'course_completion'
+          `, [student_id, course_id]);
 
-      // Generar número de certificado único
-      const certificate_number = generateCertificateNumber();
+          if (existingCourseCert && existingCourseCert.total > 0) {
+            console.log(`⚠️  Estudiante ${student_id}: Ya tiene certificado de curso completo, pero se generará certificado de módulo (esto es correcto)`);
+          }
+          
+          // VALIDACIÓN ADICIONAL: Asegurar que NO se genere un certificado de curso
+          console.log(`✅ Estudiante ${student_id}: Generando SOLO certificado de módulo (tipo: ${certificateType}). NO se generará certificado de curso.`);
+        } else {
+          console.log(`✅ Estudiante ${student_id}: Generando certificado de curso completo (tipo: ${certificateType})`);
+        }
 
-      // Usar datos manuales o automáticos
-      const hours_to_use = manual_hours || course.duration_hours;
-      const start_date = manual_start_date || new Date().toISOString().split('T')[0];
-      const completion_date = manual_completion_date || new Date().toISOString().split('T')[0];
-      const issue_date = new Date().toISOString().split('T')[0];
+        // Obtener información del estudiante
+        const student = await queryOne(`
+          SELECT name, email FROM users WHERE id = ?
+        `, [student_id]);
 
-      // Preparar firma personalizada o usar la por defecto
-      let signature_text;
-      if (custom_signature) {
-        signature_text = custom_signature;
-      } else if (action === 'generate_module_certificates') {
-        signature_text = `El mencionado módulo "${module_name}" ha sido dictado por\n${course.instructors || 'BITCAN'}`;
-      } else {
-        signature_text = `El mencionado curso ha sido dictado por\n${course.instructors || 'BITCAN'}`;
-      }
+        if (!student) {
+          console.error(`❌ Estudiante ${student_id}: No encontrado`);
+          errors.push({ student_id, reason: 'Estudiante no encontrado' });
+          continue;
+        }
+
+        console.log(`📝 Procesando certificado para: ${student.name} (ID: ${student_id})`);
+
+        // Generar número de certificado único
+        const certificate_number = generateCertificateNumber();
+
+        // Usar datos manuales o automáticos (con mapeo correcto)
+        const final_hours = hours_to_use || course.duration_hours;
+        const start_date = start_date_to_use || new Date().toISOString().split('T')[0];
+        const completion_date = completion_date_to_use || new Date().toISOString().split('T')[0];
+        const issue_date = new Date().toISOString().split('T')[0];
+
+        // Preparar firma personalizada o usar la por defecto
+        let signature_text;
+        if (signature_to_use) {
+          signature_text = signature_to_use;
+        } else if (action === 'generate_module_certificates') {
+          signature_text = `El mencionado módulo "${module_name}" ha sido dictado por\n${course.instructors || 'BITCAN'}`;
+        } else {
+          signature_text = `El mencionado curso ha sido dictado por\n${course.instructors || 'BITCAN'}`;
+        }
 
       // Generar HTML del certificado
       // Nota: generateCertificateHTML usa reemplazo simple, no Handlebars
       // Por lo tanto, solo pasamos valores ya formateados
-      const certificate_html = generateCertificateHTML(template.template_html, {
-        STUDENT_NAME: student.name,
-        COURSE_NAME: action === 'generate_module_certificates' ? course.title : course.title,
-        MODULE_NAME: action === 'generate_module_certificates' ? module_name : undefined,
-        DURATION_HOURS: hours_to_use,
-        START_DATE: new Date(start_date).toLocaleDateString('es-PY'),
-        COMPLETION_DATE: new Date(completion_date).toLocaleDateString('es-PY'),
-        ISSUE_DATE: new Date(issue_date).toLocaleDateString('es-PY'),
-        issue_date: issue_date, // Para formatDate helper si la plantilla lo usa
-        CERTIFICATE_NUMBER: certificate_number,
-        INSTRUCTOR_NAME: course.instructors || 'BITCAN',
-        CUSTOM_SIGNATURE: signature_text,
-        CUSTOM_MESSAGE: body.custom_message || ''
-      });
+        const certificate_html = generateCertificateHTML(template.template_html, {
+          STUDENT_NAME: student.name,
+          COURSE_NAME: action === 'generate_module_certificates' ? course.title : course.title,
+          MODULE_NAME: action === 'generate_module_certificates' ? module_name : undefined,
+          DURATION_HOURS: final_hours,
+          START_DATE: new Date(start_date).toLocaleDateString('es-PY'),
+          COMPLETION_DATE: new Date(completion_date).toLocaleDateString('es-PY'),
+          ISSUE_DATE: new Date(issue_date).toLocaleDateString('es-PY'),
+          issue_date: issue_date, // Para formatDate helper si la plantilla lo usa
+          CERTIFICATE_NUMBER: certificate_number,
+          INSTRUCTOR_NAME: course.instructors || 'BITCAN',
+          CUSTOM_SIGNATURE: signature_text,
+          CUSTOM_MESSAGE: custom_message || ''
+        });
 
-      // Guardar certificado en la base de datos
-      const requires_rating = body.requires_rating === true;
-      const certificate_data = action === 'generate_module_certificates' 
-        ? JSON.stringify({ html: certificate_html, module_name: module_name, requires_rating: requires_rating })
-        : JSON.stringify({ html: certificate_html });
+        // Guardar certificado en la base de datos
+        // IMPORTANTE: requires_rating puede venir como boolean true/false o como string "true"/"false"
+        // Usar el valor extraído del body al inicio
+        const requires_rating_value = requires_rating === true || requires_rating === 'true' || requires_rating === 1;
+        
+        console.log(`🔍 DEBUG - requires_rating para certificado ${certificate_number}: valor original = ${requires_rating} (tipo: ${typeof requires_rating}), procesado = ${requires_rating_value}`);
+        
+        // Guardar TODOS los campos del módulo en certificate_data para certificados de módulo
+        const certificate_data = action === 'generate_module_certificates' 
+          ? JSON.stringify({ 
+              html: certificate_html, 
+              module_name: module_name,
+              requires_rating: requires_rating_value,
+              module_hours: module_hours || null,
+              module_start_date: module_start_date || null,
+              module_completion_date: module_completion_date || null,
+              module_custom_signature: module_custom_signature || null
+            })
+          : JSON.stringify({ html: certificate_html });
+        
+        console.log(`🔍 DEBUG - certificate_data guardado para módulo:`, {
+          module_name: module_name,
+          requires_rating: requires_rating_value,
+          module_hours: module_hours || null,
+          module_start_date: module_start_date || null,
+          module_completion_date: module_completion_date || null,
+          module_custom_signature: module_custom_signature || null
+        });
 
-      await query(`
-        INSERT INTO certificates (
-          user_id, course_id, certificate_number, issue_date, completion_date,
-          status, certificate_data, issued_by, created_at, updated_at, certificate_type
-        ) VALUES (?, ?, ?, ?, ?, 'issued', ?, ?, NOW(), NOW(), ?)
-      `, [
-        student_id,
-        course_id,
-        certificate_number,
-        issue_date,
-        completion_date,
-        certificate_data,
-        decoded.id,
-        certificateType
-      ]);
+        // Verificar una vez más antes de insertar que el tipo es correcto
+        if (action === 'generate_module_certificates' && certificateType !== 'module_completion') {
+          console.error(`❌ ERROR: Se intentó generar certificado de módulo pero el tipo es ${certificateType}`);
+          errors.push({ 
+            student_id, 
+            reason: `Error: tipo de certificado incorrecto. Esperado: module_completion, Obtenido: ${certificateType}` 
+          });
+          continue;
+        }
 
-      generated_count++;
+        if (action !== 'generate_module_certificates' && certificateType !== 'course_completion') {
+          console.error(`❌ ERROR: Se intentó generar certificado de curso pero el tipo es ${certificateType}`);
+          errors.push({ 
+            student_id, 
+            reason: `Error: tipo de certificado incorrecto. Esperado: course_completion, Obtenido: ${certificateType}` 
+          });
+          continue;
+        }
+
+          // VALIDACIÓN FINAL ANTES DE INSERTAR: Verificar que el tipo sea correcto
+          if (action === 'generate_module_certificates') {
+            if (certificateType !== 'module_completion') {
+              console.error(`❌ BLOQUEO CRÍTICO: Se intentó insertar certificado de tipo ${certificateType} cuando la acción es generar módulo.`);
+              console.error(`   Acción: ${action}, Tipo esperado: module_completion, Tipo obtenido: ${certificateType}`);
+              errors.push({ 
+                student_id, 
+                reason: `BLOQUEO: No se puede insertar certificado de tipo ${certificateType} cuando la acción es generar módulo` 
+              });
+              continue;
+            }
+          }
+
+        // VALIDACIÓN FINAL ABSOLUTA: Asegurar que el tipo sea correcto ANTES de insertar
+        let finalCertificateType = certificateType;
+        
+        if (action === 'generate_module_certificates') {
+          // FORZAR que sea module_completion si la acción es generar módulos
+          if (finalCertificateType !== 'module_completion') {
+            console.error(`❌ BLOQUEO ABSOLUTO: Tipo incorrecto detectado. Forzando a module_completion.`);
+            console.error(`   Tipo recibido: ${finalCertificateType}, Tipo forzado: module_completion`);
+            finalCertificateType = 'module_completion';
+          }
+          console.log(`💾 Insertando certificado tipo: ${finalCertificateType} para estudiante ${student_id} (acción: ${action})`);
+          console.log(`   ✅ Confirmación: Insertando SOLO certificado de módulo. Tipo: ${finalCertificateType}`);
+        } else {
+          // FORZAR que sea course_completion si la acción es generar curso
+          if (finalCertificateType !== 'course_completion') {
+            console.error(`❌ BLOQUEO ABSOLUTO: Tipo incorrecto detectado. Forzando a course_completion.`);
+            console.error(`   Tipo recibido: ${finalCertificateType}, Tipo forzado: course_completion`);
+            finalCertificateType = 'course_completion';
+          }
+          console.log(`💾 Insertando certificado tipo: ${finalCertificateType} para estudiante ${student_id} (acción: ${action})`);
+        }
+
+        // VALIDACIÓN FINAL: Rechazar explícitamente si el tipo no coincide con la acción
+        if (action === 'generate_module_certificates' && finalCertificateType !== 'module_completion') {
+          console.error(`❌ ERROR CRÍTICO: No se puede insertar certificado de tipo ${finalCertificateType} cuando action=${action}`);
+          errors.push({ 
+            student_id, 
+            reason: `Error crítico: tipo de certificado no coincide con la acción` 
+          });
+          continue;
+        }
+
+        if (action !== 'generate_module_certificates' && finalCertificateType !== 'course_completion') {
+          console.error(`❌ ERROR CRÍTICO: No se puede insertar certificado de tipo ${finalCertificateType} cuando action=${action}`);
+          errors.push({ 
+            student_id, 
+            reason: `Error crítico: tipo de certificado no coincide con la acción` 
+          });
+          continue;
+        }
+
+        const insertResult = await query(`
+          INSERT INTO certificates (
+            user_id, course_id, certificate_number, issue_date, completion_date,
+            status, certificate_data, issued_by, created_at, updated_at, certificate_type
+          ) VALUES (?, ?, ?, ?, ?, 'issued', ?, ?, NOW(), NOW(), ?)
+        `, [
+          student_id,
+          course_id,
+          certificate_number,
+          issue_date,
+          completion_date,
+          certificate_data,
+          decoded.id,
+          finalCertificateType  // Usar el tipo validado y forzado
+        ]);
+
+        // Verificar que se insertó correctamente con el tipo correcto
+        const insertedCert = await queryOne(`
+          SELECT id, certificate_type, certificate_number 
+          FROM certificates 
+          WHERE id = ?
+        `, [(insertResult as any).insertId]);
+
+        if (!insertedCert) {
+          console.error(`❌ ERROR: No se pudo verificar el certificado insertado`);
+          errors.push({ 
+            student_id, 
+            reason: `Error: no se pudo verificar el certificado insertado` 
+          });
+          continue;
+        }
+
+        if (insertedCert.certificate_type !== finalCertificateType) {
+          console.error(`❌ ERROR CRÍTICO: Certificado insertado con tipo incorrecto!`);
+          console.error(`   Esperado: ${finalCertificateType}, Obtenido: ${insertedCert.certificate_type}`);
+          console.error(`   Acción: ${action}, ID: ${insertedCert.id}`);
+          errors.push({ 
+            student_id, 
+            reason: `Error crítico: certificado insertado con tipo incorrecto. Esperado: ${finalCertificateType}, Obtenido: ${insertedCert.certificate_type}` 
+          });
+          continue;
+        }
+
+        if (action === 'generate_module_certificates' && insertedCert.certificate_type !== 'module_completion') {
+          console.error(`❌ ERROR CRÍTICO: Se insertó certificado de curso cuando debería ser de módulo!`);
+          console.error(`   Tipo en BD: ${insertedCert.certificate_type}, Acción: ${action}`);
+          errors.push({ 
+            student_id, 
+            reason: `Error crítico: se insertó certificado de curso cuando debería ser de módulo` 
+          });
+          continue;
+        }
+
+        console.log(`✅ Certificado generado correctamente: ${certificate_number} (ID: ${insertedCert.id}) tipo: ${insertedCert.certificate_type} para ${student.name}`);
+        console.log(`   ✅ Confirmación final: Tipo en BD = ${insertedCert.certificate_type}, Acción = ${action}`);
+        generated_count++;
+      } catch (error) {
+        console.error(`❌ Error procesando estudiante ${student_id}:`, error);
+        errors.push({ 
+          student_id, 
+          reason: error instanceof Error ? error.message : 'Error desconocido' 
+        });
+      }
     }
 
     const message = action === 'generate_module_certificates' 
-      ? `Se generaron ${generated_count} certificados de módulo exitosamente`
-      : `Se generaron ${generated_count} certificados exitosamente`;
+      ? `Se generaron ${generated_count} certificados de módulo exitosamente${skipped_count > 0 ? ` (${skipped_count} omitidos por ya existir)` : ''}${errors.length > 0 ? ` (${errors.length} errores)` : ''}`
+      : `Se generaron ${generated_count} certificados exitosamente${skipped_count > 0 ? ` (${skipped_count} omitidos por ya existir)` : ''}${errors.length > 0 ? ` (${errors.length} errores)` : ''}`;
+
+    console.log(`📊 Resumen: ${generated_count} generados, ${skipped_count} omitidos, ${errors.length} errores`);
 
     return NextResponse.json({
       success: true,
       message: message,
-      generated_count: generated_count
+      generated_count: generated_count,
+      skipped_count: skipped_count,
+      errors: errors.length > 0 ? errors : undefined
     });
 
   } catch (error) {

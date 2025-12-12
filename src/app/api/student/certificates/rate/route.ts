@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
+import { safeParseJSON } from '@/lib/certificates/certificate-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,28 +79,39 @@ export async function POST(request: NextRequest) {
     }
 
     // Marcar certificado como recibido (curso completo o módulo que requiere calificación)
-    // Primero actualizar certificados de curso completo
+    // Primero actualizar certificados de curso completo (nuevos y antiguos)
     await query(`
       UPDATE certificates 
       SET is_received = 1, rating_id = ?
-      WHERE user_id = ? AND course_id = ? AND (certificate_type = 'course' OR certificate_type IS NULL)
+      WHERE user_id = ? AND course_id = ? 
+        AND (certificate_type = 'course_completion' 
+             OR certificate_type = 'course' 
+             OR certificate_type IS NULL)
     `, [ratingId, userId, course_id]);
 
-    // Luego actualizar certificados de módulo que requieren calificación
+    // Luego actualizar certificados de módulo que requieren calificación (nuevos y antiguos)
     const moduleCertificates = await query(`
-      SELECT id, certificate_data 
+      SELECT id, certificate_data, certificate_type
       FROM certificates 
-      WHERE user_id = ? AND course_id = ? AND certificate_type = 'module'
+      WHERE user_id = ? AND course_id = ? 
+        AND (certificate_type = 'module_completion' OR certificate_type = 'module')
     `, [userId, course_id]);
 
+    console.log(`🔍 DEBUG - Certificados de módulo encontrados para calificación: ${moduleCertificates.length}`);
+    
     for (const cert of moduleCertificates) {
-      const certData = cert.certificate_data ? JSON.parse(cert.certificate_data) : {};
+      const certData = cert.certificate_data ? safeParseJSON(cert.certificate_data) : {};
+      console.log(`🔍 DEBUG - Certificado ${cert.id}: requires_rating = ${certData.requires_rating}, tipo = ${cert.certificate_type}`);
+      
       if (certData.requires_rating === true) {
+        console.log(`✅ Actualizando certificado de módulo ${cert.id} como recibido después de calificación`);
         await query(`
           UPDATE certificates 
           SET is_received = 1, rating_id = ?
           WHERE id = ?
         `, [ratingId, cert.id]);
+      } else {
+        console.log(`⏭️  Certificado de módulo ${cert.id} no requiere calificación, saltando`);
       }
     }
 

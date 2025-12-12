@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import { getCertificateService } from '@/lib/certificates/certificate-service';
+import { getCertificateService, safeParseJSON } from '@/lib/certificates/certificate-service';
 
 export async function GET(
   request: NextRequest,
@@ -50,8 +50,10 @@ export async function GET(
         return NextResponse.json({ error: 'Certificado no encontrado' }, { status: 404 });
       }
 
-      // Certificados de curso completo siempre requieren calificación
-      if (certData.certificate_type === 'course' || certData.certificate_type === null) {
+      // Certificados de curso completo siempre requieren calificación (nuevos y antiguos)
+      if (certData.certificate_type === 'course_completion' 
+          || certData.certificate_type === 'course' 
+          || certData.certificate_type === null) {
         if (!certData.is_received || certData.is_received === 0) {
           return NextResponse.json(
             { error: 'Debes calificar el curso antes de descargar el certificado' },
@@ -59,16 +61,23 @@ export async function GET(
           );
         }
       }
-      // Certificados de módulo: verificar si requiere calificación
-      else if (certData.certificate_type === 'module') {
-        const certDataParsed = certData.certificate_data ? JSON.parse(certData.certificate_data) : {};
+      // Certificados de módulo: verificar si requiere calificación (nuevos y antiguos)
+      else if (certData.certificate_type === 'module_completion' || certData.certificate_type === 'module') {
+        const certDataParsed = certData.certificate_data ? safeParseJSON(certData.certificate_data) : {};
+        console.log(`🔍 DEBUG - Certificado de módulo ${certificateId}: requires_rating = ${certDataParsed.requires_rating}, is_received = ${certData.is_received}`);
+        
         if (certDataParsed.requires_rating === true) {
           if (!certData.is_received || certData.is_received === 0) {
+            console.log(`❌ Bloqueando descarga: certificado requiere calificación pero is_received = ${certData.is_received}`);
             return NextResponse.json(
               { error: 'Debes calificar antes de descargar el certificado' },
               { status: 403 }
             );
+          } else {
+            console.log(`✅ Permitiendo descarga: certificado requiere calificación y is_received = ${certData.is_received}`);
           }
+        } else {
+          console.log(`✅ Permitiendo descarga: certificado de módulo no requiere calificación`);
         }
       }
     }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
+import { safeParseJSON } from '@/lib/certificates/certificate-service';
 import { writeFile, unlink } from 'fs/promises';
 import { spawn } from 'child_process';
 import { tmpdir } from 'os';
@@ -40,7 +41,7 @@ export async function GET(
       return NextResponse.json({ error: 'Certificado no encontrado' }, { status: 404 });
     }
 
-    const certificateData = JSON.parse(certificate.certificate_data);
+    const certificateData = safeParseJSON(certificate.certificate_data);
     const html = certificateData.html;
 
     if (!html) {

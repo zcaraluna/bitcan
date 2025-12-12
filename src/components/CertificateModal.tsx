@@ -152,20 +152,34 @@ export default function CertificateModal({ courseId, courseTitle, onClose }: Cer
       return;
     }
 
+    // LOGGING DETALLADO EN EL FRONTEND
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('🎯 FRONTEND: Generando Certificados de CURSO COMPLETO');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('Active Tab:', activeTab);
+    console.log('Course ID:', courseId);
+    console.log('Selected Students:', selectedStudents);
+
+    const requestBody = {
+      action: 'generate_certificates',
+      course_id: courseId,
+      student_ids: selectedStudents,
+      manual_hours: courseForm.manualHours || null,
+      manual_start_date: courseForm.manualStartDate || null,
+      manual_completion_date: courseForm.manualCompletionDate || null,
+      custom_signature: courseForm.customSignature || null
+    };
+
+    console.log('📤 Request Body:', JSON.stringify(requestBody, null, 2));
+    console.log('✅ Acción enviada:', requestBody.action);
+    console.log('═══════════════════════════════════════════════════════════');
+
     try {
       setGenerating(true);
       const response = await fetch('/api/admin/certificates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'generate_certificates',
-          course_id: courseId,
-          student_ids: selectedStudents,
-          manual_hours: courseForm.manualHours || null,
-          manual_start_date: courseForm.manualStartDate || null,
-          manual_completion_date: courseForm.manualCompletionDate || null,
-          custom_signature: courseForm.customSignature || null
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();
@@ -197,27 +211,52 @@ export default function CertificateModal({ courseId, courseTitle, onClose }: Cer
       return;
     }
 
+    // LOGGING DETALLADO EN EL FRONTEND
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('🎯 FRONTEND: Generando Certificados de MÓDULO');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('Active Tab:', activeTab);
+    console.log('Course ID:', courseId);
+    console.log('Module Name:', moduleForm.moduleName);
+    console.log('Selected Students:', selectedModuleStudents);
+    console.log('Module Form:', moduleForm);
+
+    const requestBody = {
+      action: 'generate_module_certificates',
+      course_id: courseId,
+      student_ids: selectedModuleStudents,
+      module_name: moduleForm.moduleName,
+      module_hours: moduleForm.moduleHours || null,
+      module_start_date: moduleForm.moduleStartDate || null,
+      module_completion_date: moduleForm.moduleCompletionDate || null,
+      module_custom_signature: moduleForm.moduleCustomSignature || null,
+      requires_rating: moduleForm.requiresRating // Enviar el valor booleano directamente
+    };
+    
+    console.log('🔍 DEBUG - requires_rating en requestBody:', requestBody.requires_rating, '(tipo:', typeof requestBody.requires_rating, ')');
+
+    console.log('📤 Request Body:', JSON.stringify(requestBody, null, 2));
+    console.log('✅ Acción enviada:', requestBody.action);
+    console.log('═══════════════════════════════════════════════════════════');
+
     try {
       setGenerating(true);
       const response = await fetch('/api/admin/certificates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'generate_module_certificates',
-          course_id: courseId,
-          student_ids: selectedModuleStudents,
-          module_name: moduleForm.moduleName,
-          module_hours: moduleForm.moduleHours || null,
-          module_start_date: moduleForm.moduleStartDate || null,
-          module_completion_date: moduleForm.moduleCompletionDate || null,
-          module_custom_signature: moduleForm.moduleCustomSignature || null,
-          requires_rating: moduleForm.requiresRating
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();
       
+      console.log('📥 Response recibida:', data);
+      console.log('✅ Success:', data.success);
+      console.log('📊 Generated count:', data.generated_count);
+      console.log('⏭️  Skipped count:', data.skipped_count);
+      console.log('❌ Errors:', data.errors);
+      
       if (data.success) {
+        console.log('✅ Certificados generados exitosamente');
         alert(data.message);
         setSelectedModuleStudents([]);
         setModuleForm({
@@ -231,7 +270,8 @@ export default function CertificateModal({ courseId, courseTitle, onClose }: Cer
         loadCourseStudents();
         loadCertificates();
       } else {
-        alert('Error: ' + data.message);
+        console.error('❌ Error en la respuesta:', data.error);
+        alert('Error: ' + (data.message || data.error));
       }
     } catch (error) {
       console.error('Error generating module certificates:', error);
