@@ -125,7 +125,6 @@ export class PDFGenerator {
           },
           displayHeaderFooter: options.displayHeaderFooter || false,
           preferCSSPageSize: options.preferCSSPageSize || false,
-          timeout: 60000, // Timeout para generar PDF
         };
 
         // Generar PDF
@@ -223,7 +222,6 @@ export class PDFGenerator {
         const screenshot = await page.screenshot({
           fullPage: options.fullPage !== false,
           type: 'png',
-          timeout: 60000,
         });
 
         if (page) {
