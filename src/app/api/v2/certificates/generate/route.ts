@@ -54,10 +54,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener plantilla (usar por defecto si no se especifica)
+    // Verificar qué columnas tiene la tabla
+    const hasHtmlContent = await queryOne<{count: number}>(`
+      SELECT COUNT(*) as count 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'certificate_templates' 
+      AND COLUMN_NAME = 'html_content'
+    `);
+    
+    const templateColumn = hasHtmlContent && hasHtmlContent.count > 0 ? 'html_content' : 'template_html';
+    const cssColumn = hasHtmlContent && hasHtmlContent.count > 0 ? 'css_styles' : 'template_css';
+    
     let template;
     if (template_id) {
       template = await queryOne(
-        `SELECT id, name, description, template_html, template_css as css_styles, is_active, is_default 
+        `SELECT id, name, description, ${templateColumn} as template_html, ${cssColumn} as css_styles, is_active, is_default 
          FROM certificate_templates WHERE id = ? AND is_active = 1`,
         [template_id]
       );
@@ -65,11 +77,11 @@ export async function POST(request: NextRequest) {
       // Para módulos, buscar plantilla que contenga MODULE_NAME o el texto específico
       if (certificate_type === 'module_completion') {
         template = await queryOne(
-          `SELECT id, name, description, template_html, template_css as css_styles, is_active, is_default 
+          `SELECT id, name, description, ${templateColumn} as template_html, ${cssColumn} as css_styles, is_active, is_default 
            FROM certificate_templates 
            WHERE is_active = 1 
-             AND (template_html LIKE '%MODULE_NAME%' 
-                  OR template_html LIKE '%por haber completado exitosamente el módulo%')
+             AND (${templateColumn} LIKE '%MODULE_NAME%' 
+                  OR ${templateColumn} LIKE '%por haber completado exitosamente el módulo%')
            ORDER BY is_default DESC, id DESC
            LIMIT 1`
         );
@@ -78,7 +90,7 @@ export async function POST(request: NextRequest) {
       // Si no se encontró plantilla de módulo o es certificado de curso, usar la por defecto
       if (!template) {
         template = await queryOne(
-          `SELECT id, name, description, template_html, template_css as css_styles, is_active, is_default 
+          `SELECT id, name, description, ${templateColumn} as template_html, ${cssColumn} as css_styles, is_active, is_default 
            FROM certificate_templates 
            WHERE is_default = 1 AND is_active = 1
            LIMIT 1`

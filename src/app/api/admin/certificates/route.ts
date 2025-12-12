@@ -244,12 +244,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Obtener plantilla según el tipo de certificado
+    // Verificar qué columnas tiene la tabla
+    const hasHtmlContent = await queryOne<{count: number}>(`
+      SELECT COUNT(*) as count 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() 
+      AND TABLE_NAME = 'certificate_templates' 
+      AND COLUMN_NAME = 'html_content'
+    `);
+    
+    const templateColumn = hasHtmlContent && hasHtmlContent.count > 0 ? 'html_content' : 'template_html';
+    const templateField = hasHtmlContent && hasHtmlContent.count > 0 ? 'html_content' : 'template_html';
+    
     let template;
     if (action === 'generate_module_certificates') {
-      // Para módulos, buscar plantilla de módulo (is_default = 0) o usar la por defecto si no existe
+      // Para módulos, buscar plantilla de módulo que contenga MODULE_NAME o texto específico
       template = await queryOne(`
-        SELECT template_html FROM certificate_templates 
-        WHERE is_active = 1 AND is_default = 0
+        SELECT ${templateColumn} as template_html, id, name 
+        FROM certificate_templates 
+        WHERE is_active = 1 
+        AND (${templateColumn} LIKE '%MODULE_NAME%' 
+             OR ${templateColumn} LIKE '%por haber completado exitosamente el módulo%')
+        ORDER BY is_default DESC, id DESC
         LIMIT 1
       `);
       
@@ -257,7 +273,8 @@ export async function POST(request: NextRequest) {
       if (!template) {
         console.warn('No se encontró plantilla de módulo, usando plantilla por defecto');
         template = await queryOne(`
-          SELECT template_html FROM certificate_templates 
+          SELECT ${templateColumn} as template_html, id, name 
+          FROM certificate_templates 
           WHERE is_default = 1 AND is_active = 1 
           LIMIT 1
         `);
@@ -265,7 +282,8 @@ export async function POST(request: NextRequest) {
     } else {
       // Para curso completo, usar la plantilla por defecto
       template = await queryOne(`
-        SELECT template_html FROM certificate_templates 
+        SELECT ${templateColumn} as template_html, id, name 
+        FROM certificate_templates 
         WHERE is_default = 1 AND is_active = 1 
         LIMIT 1
       `);

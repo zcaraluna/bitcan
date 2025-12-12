@@ -73,11 +73,43 @@ export async function POST(request: NextRequest) {
       `);
     }
 
-    const result = await query(`
-      INSERT INTO certificate_templates (
-        name, description, template_html, is_default, is_active, created_by, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, 1, ?, NOW(), NOW())
-    `, [name, description, template_html, is_default ? 1 : 0, decoded.id]);
+    // Verificar qué columnas tiene la tabla (html_content vs template_html)
+    const columns = await query<{COLUMN_NAME: string}>(
+      `SELECT COLUMN_NAME 
+       FROM INFORMATION_SCHEMA.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() 
+       AND TABLE_NAME = 'certificate_templates' 
+       AND COLUMN_NAME IN ('html_content', 'template_html')`
+    ) as any[];
+    
+    const columnNames = columns.map((col: any) => col.COLUMN_NAME);
+    const hasHtmlContent = columnNames.includes('html_content');
+    const hasTemplateHtml = columnNames.includes('template_html');
+    
+    let result;
+    
+    if (hasHtmlContent) {
+      // Usar html_content (estructura del VPS)
+      result = await query(`
+        INSERT INTO certificate_templates (
+          name, description, html_content, is_default, is_active, created_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, 1, ?, NOW(), NOW())
+      `, [name, description, template_html, is_default ? 1 : 0, decoded.id]);
+    } else if (hasTemplateHtml) {
+      // Usar template_html (estructura antigua)
+      result = await query(`
+        INSERT INTO certificate_templates (
+          name, description, template_html, is_default, is_active, created_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, 1, ?, NOW(), NOW())
+      `, [name, description, template_html, is_default ? 1 : 0, decoded.id]);
+    } else {
+      // Intentar con html_content por defecto (asumir estructura del VPS)
+      result = await query(`
+        INSERT INTO certificate_templates (
+          name, description, html_content, is_default, is_active, created_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, 1, ?, NOW(), NOW())
+      `, [name, description, template_html, is_default ? 1 : 0, decoded.id]);
+    }
 
     return NextResponse.json({
       success: true,
